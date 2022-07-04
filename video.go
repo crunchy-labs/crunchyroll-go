@@ -278,3 +278,34 @@ func (s *Series) Seasons() (seasons []*Season, err error) {
 	}
 	return
 }
+
+type ratingStar struct {
+	Displayed  string `json:"displayed"`
+	Unit       string `json:"unit"`
+	Percentage int    `json:"percentage"`
+}
+
+type Rating struct {
+	S1      ratingStar `json:"1s"`
+	S2      ratingStar `json:"2s"`
+	S3      ratingStar `json:"3s"`
+	S4      ratingStar `json:"4s"`
+	S5      ratingStar `json:"5s"`
+	Average string     `json:"average"`
+	Total   int        `json:"total"`
+	Rating  string     `json:"rating"`
+}
+
+func (s *Series) Rating() (*Rating, error) {
+	endpoint := fmt.Sprintf("https://beta.crunchyroll.com/content-reviews/v2/user/%s/rating/series/%s", s.crunchy.Config.AccountID, s.ID)
+	resp, err := s.crunchy.request(endpoint, http.MethodGet)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	rating := &Rating{}
+	json.NewDecoder(resp.Body).Decode(rating)
+
+	return rating, nil
+}
