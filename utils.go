@@ -9,6 +9,11 @@ import (
 	"strings"
 )
 
+type BulkResult[T any] struct {
+	Items []T `json:"items"`
+	Total int `json:"total"`
+}
+
 func decodeMapToStruct(m interface{}, s interface{}) error {
 	jsonBody, err := json.Marshal(m)
 	if err != nil {

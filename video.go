@@ -279,23 +279,6 @@ func (s *Series) Seasons() (seasons []*Season, err error) {
 	return
 }
 
-type ratingStar struct {
-	Displayed  string `json:"displayed"`
-	Unit       string `json:"unit"`
-	Percentage int    `json:"percentage"`
-}
-
-type Rating struct {
-	S1      ratingStar `json:"1s"`
-	S2      ratingStar `json:"2s"`
-	S3      ratingStar `json:"3s"`
-	S4      ratingStar `json:"4s"`
-	S5      ratingStar `json:"5s"`
-	Average string     `json:"average"`
-	Total   int        `json:"total"`
-	Rating  string     `json:"rating"`
-}
-
 func (s *Series) Rating() (*Rating, error) {
 	endpoint := fmt.Sprintf("https://beta.crunchyroll.com/content-reviews/v2/user/%s/rating/series/%s", s.crunchy.Config.AccountID, s.ID)
 	resp, err := s.crunchy.request(endpoint, http.MethodGet)
@@ -308,4 +291,77 @@ func (s *Series) Rating() (*Rating, error) {
 	json.NewDecoder(resp.Body).Decode(rating)
 
 	return rating, nil
+}
+
+type ReviewSortType string
+
+const (
+	ReviewSortNewest  ReviewSortType = "newest"
+	ReviewSortOldest                 = "oldest"
+	ReviewSortHelpful                = "helpful"
+)
+
+type ReviewOptions struct {
+	Sort   ReviewSortType `json:"sort"`
+	Filter ReviewRating   `json:"filter"`
+}
+
+func (s *Series) Reviews(options ReviewOptions, page uint, size uint) (BulkResult[*Review], error) {
+	options, err := structDefaults(ReviewOptions{Sort: ReviewSortNewest}, options)
+	if err != nil {
+		return BulkResult[*Review]{}, err
+	}
+	endpoint := fmt.Sprintf("https://beta.crunchyroll.com/content-reviews/v2/%s/user/%s/review/series/%s/list?page=%d&page_size=%d&sort=%s&filter=%s", s.crunchy.Locale, s.crunchy.Config.AccountID, s.ID, page, size, options.Sort, options.Filter)
+	resp, err := s.crunchy.request(endpoint, http.MethodGet)
+	if err != nil {
+		return BulkResult[*Review]{}, err
+	}
+	defer resp.Body.Close()
+
+	var result BulkResult[*Review]
+	json.NewDecoder(resp.Body).Decode(&result)
+
+	for _, review := range result.Items {
+		review.crunchy = s.crunchy
+	}
+
+	return result, nil
+}
+
+func (s *Series) Rate(rating ReviewRating) error {
+	endpoint := fmt.Sprintf("https://beta.crunchyroll.com/content-reviews/v2/en-US/user/%s/review/series/%s", s.crunchy.Config.AccountID, s.ID)
+	body, _ := json.Marshal(map[string]string{"rating": string(rating)})
+	req, err := http.NewRequest(http.MethodPut, endpoint, bytes.NewBuffer(body))
+	if err != nil {
+		return err
+	}
+	req.Header.Add("Content-Type", "application/json")
+	_, err = s.crunchy.requestFull(req)
+	return err
+}
+
+func (s *Series) CreateReview(title, content string, spoiler bool) (*Review, error) {
+	endpoint := fmt.Sprintf("https://beta.crunchyroll.com/content-reviews/v2/en-US/user/%s/review/series/%s", s.crunchy.Config.AccountID, s.ID)
+	body, _ := json.Marshal(map[string]any{
+		"title":   title,
+		"body":    content,
+		"spoiler": spoiler,
+	})
+	req, err := http.NewRequest(http.MethodPut, endpoint, bytes.NewBuffer(body))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Add("Content-Type", "application/json")
+	resp, err := s.crunchy.requestFull(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	review := &Review{
+		SeriesID: s.ID,
+	}
+	json.NewDecoder(resp.Body).Decode(review)
+
+	return review, nil
 }
