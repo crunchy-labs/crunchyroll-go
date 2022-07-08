@@ -12,8 +12,8 @@ A [go](https://golang.org) written library for the undocumented [crunchyroll](ht
   <a href="https://golang.org">
     <img src="https://img.shields.io/github/go-mod/go-version/crunchy-labs/crunchyroll-go?style=flat-square" alt="Go version">
   </a>
-  <a href="https://discord.gg/gUWwekeNNg">
-    <img src="https://img.shields.io/discord/915659846836162561?label=discord&style=flat-square" alt="Discord">
+  <a href="https://discord.gg/PXGPGpQxgk">
+    <img src="https://img.shields.io/discord/994882878125121596?label=discord&style=flat-square" alt="Discord">
   </a>
   <a href="https://github.com/crunchy-labs/crunchyroll-go/actions/workflows/ci.yml">
     <img src="https://github.com/crunchy-labs/crunchyroll-go/workflows/CI/badge.svg?style=flat" alt="CI">
