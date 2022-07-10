@@ -72,8 +72,12 @@ type Review struct {
 	} `json:"ratings"`
 }
 
+func (r *Review) IsOwner() bool {
+	return r.crunchy.Config.AccountID == r.Author.ID
+}
+
 func (r *Review) Edit(title, content string, spoiler bool) error {
-	if r.Author.ID != r.crunchy.Config.AccountID {
+	if !r.IsOwner() {
 		return fmt.Errorf("cannot edit, current user is not the review author")
 	}
 	endpoint := fmt.Sprintf("https://beta.crunchyroll.com/content-reviews/v2/en-US/user/%s/review/series/%s", r.crunchy.Config.AccountID, r.SeriesID)
@@ -99,7 +103,7 @@ func (r *Review) Edit(title, content string, spoiler bool) error {
 }
 
 func (r *Review) Delete() error {
-	if r.Author.ID != r.crunchy.Config.AccountID {
+	if !r.IsOwner() {
 		return fmt.Errorf("cannot delete, current user is not the review author")
 	}
 	endpoint := fmt.Sprintf("https://beta.crunchyroll.com/content-reviews/v2/en-US/user/%s/review/series/%s", r.crunchy.Config.AccountID, r.SeriesID)
