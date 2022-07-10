@@ -329,6 +329,7 @@ func (s *Series) Reviews(options ReviewOptions, page uint, size uint) (BulkResul
 
 	for _, review := range result.Items {
 		review.crunchy = s.crunchy
+		review.SeriesID = s.ID
 	}
 
 	return result, nil
@@ -371,6 +372,7 @@ func (s *Series) CreateReview(title, content string, spoiler bool) (*OwnerReview
 
 	review := &OwnerReview{}
 	json.NewDecoder(resp.Body).Decode(review)
+	review.crunchy = s.crunchy
 	review.SeriesID = s.ID
 
 	return review, nil
@@ -388,6 +390,7 @@ func (s *Series) GetOwnerReview() (*OwnerReview, error) {
 
 	review := &OwnerReview{}
 	json.NewDecoder(resp.Body).Decode(review)
+	review.crunchy = s.crunchy
 	review.SeriesID = s.ID
 
 	return review, nil
