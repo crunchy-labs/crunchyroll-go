@@ -42,7 +42,7 @@ type review struct {
 
 	SeriesID string
 
-	Review struct {
+	ReviewData struct {
 		ID              string    `json:"id"`
 		Title           string    `json:"title"`
 		Body            string    `json:"body"`
@@ -110,6 +110,8 @@ func (or *OwnerReview) Delete() error {
 }
 
 type UserReview struct {
+	Review
+
 	*review
 }
 
@@ -133,7 +135,7 @@ func (ur *UserReview) rate(positive bool) error {
 		return fmt.Errorf("review is already marked as %s", humanReadable)
 	}
 
-	endpoint := fmt.Sprintf("https://beta.crunchyroll.com/content-reviews/v2/user/%s/rating/review/%s", ur.crunchy.Config.AccountID, ur.Review.ID)
+	endpoint := fmt.Sprintf("https://beta.crunchyroll.com/content-reviews/v2/user/%s/rating/review/%s", ur.crunchy.Config.AccountID, ur.ReviewData.ID)
 	var body []byte
 	if positive {
 		body, _ = json.Marshal(map[string]string{"rate": "yes"})
@@ -160,7 +162,7 @@ func (ur *UserReview) Report() error {
 	if ur.Ratings.Reported {
 		return fmt.Errorf("review is already reported")
 	}
-	endpoint := fmt.Sprintf("https://beta.crunchyroll.com/content-reviews/v2/user/%s/report/review/%s", ur.crunchy.Config.AccountID, ur.Review.ID)
+	endpoint := fmt.Sprintf("https://beta.crunchyroll.com/content-reviews/v2/user/%s/report/review/%s", ur.crunchy.Config.AccountID, ur.ReviewData.ID)
 	_, err := ur.crunchy.request(endpoint, http.MethodPut)
 	if err != nil {
 		return err
@@ -175,7 +177,7 @@ func (ur *UserReview) RemoveReport() error {
 	if !ur.Ratings.Reported {
 		return fmt.Errorf("review is not reported")
 	}
-	endpoint := fmt.Sprintf("https://beta.crunchyroll.com/content-reviews/v2/user/%s/report/review/%s", ur.crunchy.Config.AccountID, ur.Review.ID)
+	endpoint := fmt.Sprintf("https://beta.crunchyroll.com/content-reviews/v2/user/%s/report/review/%s", ur.crunchy.Config.AccountID, ur.ReviewData.ID)
 	_, err := ur.crunchy.request(endpoint, http.MethodDelete)
 	if err != nil {
 		return err
