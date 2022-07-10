@@ -8,6 +8,7 @@ import (
 	"time"
 )
 
+// ReviewRating represents stars for a series rating from one to five.
 type ReviewRating string
 
 const (
@@ -24,6 +25,7 @@ type ratingStar struct {
 	Percentage int    `json:"percentage"`
 }
 
+// Rating represents the overall rating of a series.
 type Rating struct {
 	OneStar    ratingStar `json:"1s"`
 	TwoStars   ratingStar `json:"2s"`
@@ -35,6 +37,7 @@ type Rating struct {
 	Rating     string     `json:"rating"`
 }
 
+// Review is the interface which gets implemented by OwnerReview and UserReview.
 type Review interface{}
 
 type review struct {
@@ -74,12 +77,14 @@ type review struct {
 	} `json:"ratings"`
 }
 
+// OwnerReview is a series review which has been written from the current logged-in user.
 type OwnerReview struct {
 	Review
 
 	*review
 }
 
+// Edit edits the review from the logged in account.
 func (or *OwnerReview) Edit(title, content string, spoiler bool) error {
 	endpoint := fmt.Sprintf("https://beta.crunchyroll.com/content-reviews/v2/en-US/user/%s/review/series/%s", or.crunchy.Config.AccountID, or.SeriesID)
 	body, _ := json.Marshal(map[string]any{
@@ -103,26 +108,36 @@ func (or *OwnerReview) Edit(title, content string, spoiler bool) error {
 	return nil
 }
 
+// Delete deletes the review from the logged in account.
 func (or *OwnerReview) Delete() error {
 	endpoint := fmt.Sprintf("https://beta.crunchyroll.com/content-reviews/v2/en-US/user/%s/review/series/%s", or.crunchy.Config.AccountID, or.SeriesID)
 	_, err := or.crunchy.request(endpoint, http.MethodDelete)
 	return err
 }
 
+// UserReview is a series review written from other crunchyroll users.
 type UserReview struct {
 	Review
 
 	*review
 }
 
+// RateHelpful rates the review as helpful. A review can only be rated once
+// as helpful (or not helpful) and this cannot be undone, so be careful. Use
+// Rated to see if the review was already rated.
 func (ur *UserReview) RateHelpful() error {
 	return ur.rate(true)
 }
 
+// RateNotHelpful rates the review as not helpful. A review can only be rated
+// once as helpful (or not helpful) and this cannot be undone, so be careful.
+// Use Rated to see if the review was already rated.
 func (ur *UserReview) RateNotHelpful() error {
 	return ur.rate(false)
 }
 
+// Rated returns if the user already rated the review (with RateHelpful or
+// RateNotHelpful).
 func (ur *UserReview) Rated() bool {
 	return ur.Ratings.Rating != ""
 }
@@ -162,6 +177,8 @@ func (ur *UserReview) rate(positive bool) error {
 	return nil
 }
 
+// Report reports the review. Only works if the review hasn't been reported yet.
+// See UserReview.Ratings.Reported if it is already reported.
 func (ur *UserReview) Report() error {
 	if ur.Ratings.Reported {
 		return fmt.Errorf("review is already reported")
@@ -177,6 +194,8 @@ func (ur *UserReview) Report() error {
 	return nil
 }
 
+// RemoveReport removes the report request from the review. Only works if the user
+// has reported the review. See UserReview.Ratings.Reported if it is already reported.
 func (ur *UserReview) RemoveReport() error {
 	if !ur.Ratings.Reported {
 		return fmt.Errorf("review is not reported")

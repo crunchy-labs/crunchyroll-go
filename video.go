@@ -279,6 +279,7 @@ func (s *Series) Seasons() (seasons []*Season, err error) {
 	return
 }
 
+// Rating returns the series rating.
 func (s *Series) Rating() (*Rating, error) {
 	endpoint := fmt.Sprintf("https://beta.crunchyroll.com/content-reviews/v2/user/%s/rating/series/%s", s.crunchy.Config.AccountID, s.ID)
 	resp, err := s.crunchy.request(endpoint, http.MethodGet)
@@ -293,6 +294,7 @@ func (s *Series) Rating() (*Rating, error) {
 	return rating, nil
 }
 
+// ReviewSortType represents a sort type to sort Series.Reviews items after.
 type ReviewSortType string
 
 const (
@@ -301,11 +303,15 @@ const (
 	ReviewSortHelpful                = "helpful"
 )
 
+// ReviewOptions represents options for fetching series reviews.
 type ReviewOptions struct {
-	Sort   ReviewSortType `json:"sort"`
-	Filter ReviewRating   `json:"filter"`
+	// Sort specifies how the items should be sorted.
+	Sort ReviewSortType `json:"sort"`
+	// Filter specified after which the returning items should be filtered.
+	Filter ReviewRating `json:"filter"`
 }
 
+// Reviews returns user reviews for the series.
 func (s *Series) Reviews(options ReviewOptions, page uint, size uint) (BulkResult[*UserReview], error) {
 	options, err := structDefaults(ReviewOptions{Sort: ReviewSortNewest}, options)
 	if err != nil {
@@ -328,6 +334,7 @@ func (s *Series) Reviews(options ReviewOptions, page uint, size uint) (BulkResul
 	return result, nil
 }
 
+// Rate rates the current series.
 func (s *Series) Rate(rating ReviewRating) error {
 	endpoint := fmt.Sprintf("https://beta.crunchyroll.com/content-reviews/v2/en-US/user/%s/review/series/%s", s.crunchy.Config.AccountID, s.ID)
 	body, _ := json.Marshal(map[string]string{"rating": string(rating)})
@@ -340,6 +347,10 @@ func (s *Series) Rate(rating ReviewRating) error {
 	return err
 }
 
+// CreateReview creates a review for the current series with the logged-in account.
+// Will fail if a review is already present. Check Series.HasOwnerReview if the account
+// has already written a review. If this is the case, use Series.GetOwnerReview and user
+// OwnerReview.Edit to edit the review.
 func (s *Series) CreateReview(title, content string, spoiler bool) (*OwnerReview, error) {
 	endpoint := fmt.Sprintf("https://beta.crunchyroll.com/content-reviews/v2/en-US/user/%s/review/series/%s", s.crunchy.Config.AccountID, s.ID)
 	body, _ := json.Marshal(map[string]any{
@@ -365,6 +376,8 @@ func (s *Series) CreateReview(title, content string, spoiler bool) (*OwnerReview
 	return review, nil
 }
 
+// GetOwnerReview returns the series review, written by the current logged-in account.
+// Returns an error if no review was written yet.
 func (s *Series) GetOwnerReview() (*OwnerReview, error) {
 	endpoint := fmt.Sprintf("https://beta.crunchyroll.com/content-reviews/v2/en-US/user/%s/review/series/%s", s.crunchy.Config.AccountID, s.ID)
 	resp, err := s.crunchy.request(endpoint, http.MethodGet)
@@ -380,6 +393,7 @@ func (s *Series) GetOwnerReview() (*OwnerReview, error) {
 	return review, nil
 }
 
+// HasOwnerReview returns if the logged-in account has written a review for the series.
 func (s *Series) HasOwnerReview() bool {
 	_, err := s.GetOwnerReview()
 	return err == nil
