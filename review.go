@@ -115,16 +115,20 @@ type UserReview struct {
 	*review
 }
 
-func (ur *UserReview) Helpful() error {
+func (ur *UserReview) RateHelpful() error {
 	return ur.rate(true)
 }
 
-func (ur *UserReview) NotHelpful() error {
+func (ur *UserReview) RateNotHelpful() error {
 	return ur.rate(false)
 }
 
+func (ur *UserReview) Rated() bool {
+	return ur.Ratings.Rating != ""
+}
+
 func (ur *UserReview) rate(positive bool) error {
-	if ur.Ratings.Rating != "" {
+	if ur.Rated() {
 		var humanReadable string
 		switch ur.Ratings.Rating {
 		case "yes":
@@ -132,7 +136,7 @@ func (ur *UserReview) rate(positive bool) error {
 		case "no":
 			humanReadable = "not helpful"
 		}
-		return fmt.Errorf("review is already marked as %s", humanReadable)
+		return fmt.Errorf("review is already rated as %s", humanReadable)
 	}
 
 	endpoint := fmt.Sprintf("https://beta.crunchyroll.com/content-reviews/v2/user/%s/rating/review/%s", ur.crunchy.Config.AccountID, ur.ReviewData.ID)
