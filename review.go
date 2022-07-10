@@ -143,8 +143,15 @@ func (r *Review) rate(positive bool) error {
 		return err
 	}
 	req.Header.Add("Content-Type", "application/json")
-	_, err = r.crunchy.requestFull(req)
-	return err
+	resp, err := r.crunchy.requestFull(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	json.NewDecoder(resp.Body).Decode(&r.Ratings)
+
+	return nil
 }
 
 func (r *Review) Report() error {
@@ -153,7 +160,13 @@ func (r *Review) Report() error {
 	}
 	endpoint := fmt.Sprintf("https://beta.crunchyroll.com/content-reviews/v2/user/%s/report/review/%s", r.crunchy.Config.AccountID, r.Review.ID)
 	_, err := r.crunchy.request(endpoint, http.MethodPut)
-	return err
+	if err != nil {
+		return err
+	}
+
+	r.Ratings.Reported = true
+
+	return nil
 }
 
 func (r *Review) RemoveReport() error {
@@ -162,5 +175,11 @@ func (r *Review) RemoveReport() error {
 	}
 	endpoint := fmt.Sprintf("https://beta.crunchyroll.com/content-reviews/v2/user/%s/report/review/%s", r.crunchy.Config.AccountID, r.Review.ID)
 	_, err := r.crunchy.request(endpoint, http.MethodDelete)
-	return err
+	if err != nil {
+		return err
+	}
+
+	r.Ratings.Reported = false
+
+	return nil
 }
