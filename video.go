@@ -306,19 +306,19 @@ type ReviewOptions struct {
 	Filter ReviewRating   `json:"filter"`
 }
 
-func (s *Series) Reviews(options ReviewOptions, page uint, size uint) (BulkResult[*Review], error) {
+func (s *Series) Reviews(options ReviewOptions, page uint, size uint) (BulkResult[*UserReview], error) {
 	options, err := structDefaults(ReviewOptions{Sort: ReviewSortNewest}, options)
 	if err != nil {
-		return BulkResult[*Review]{}, err
+		return BulkResult[*UserReview]{}, err
 	}
 	endpoint := fmt.Sprintf("https://beta.crunchyroll.com/content-reviews/v2/%s/user/%s/review/series/%s/list?page=%d&page_size=%d&sort=%s&filter=%s", s.crunchy.Locale, s.crunchy.Config.AccountID, s.ID, page, size, options.Sort, options.Filter)
 	resp, err := s.crunchy.request(endpoint, http.MethodGet)
 	if err != nil {
-		return BulkResult[*Review]{}, err
+		return BulkResult[*UserReview]{}, err
 	}
 	defer resp.Body.Close()
 
-	var result BulkResult[*Review]
+	var result BulkResult[*UserReview]
 	json.NewDecoder(resp.Body).Decode(&result)
 
 	for _, review := range result.Items {
@@ -340,7 +340,7 @@ func (s *Series) Rate(rating ReviewRating) error {
 	return err
 }
 
-func (s *Series) CreateReview(title, content string, spoiler bool) (*Review, error) {
+func (s *Series) CreateReview(title, content string, spoiler bool) (*OwnerReview, error) {
 	endpoint := fmt.Sprintf("https://beta.crunchyroll.com/content-reviews/v2/en-US/user/%s/review/series/%s", s.crunchy.Config.AccountID, s.ID)
 	body, _ := json.Marshal(map[string]any{
 		"title":   title,
@@ -358,10 +358,29 @@ func (s *Series) CreateReview(title, content string, spoiler bool) (*Review, err
 	}
 	defer resp.Body.Close()
 
-	review := &Review{
-		SeriesID: s.ID,
-	}
+	review := &OwnerReview{}
 	json.NewDecoder(resp.Body).Decode(review)
+	review.SeriesID = s.ID
 
 	return review, nil
+}
+
+func (s *Series) GetOwnerReview() (*OwnerReview, error) {
+	endpoint := fmt.Sprintf("https://beta.crunchyroll.com/content-reviews/v2/en-US/user/%s/review/series/%s", s.crunchy.Config.AccountID, s.ID)
+	resp, err := s.crunchy.request(endpoint, http.MethodGet)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	review := &OwnerReview{}
+	json.NewDecoder(resp.Body).Decode(review)
+	review.SeriesID = s.ID
+
+	return review, nil
+}
+
+func (s *Series) HasOwnerReview() bool {
+	_, err := s.GetOwnerReview()
+	return err == nil
 }
