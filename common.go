@@ -1,5 +1,10 @@
 package crunchyroll
 
+type BulkResult[T any] struct {
+	Items []T `json:"items"`
+	Total int `json:"total"`
+}
+
 type Image struct {
 	Height int    `json:"height"`
 	Source string `json:"source"`
