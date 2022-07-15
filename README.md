@@ -36,6 +36,9 @@ A [Go](https://golang.org) library & cli for the undocumented [crunchyroll](http
   <a href="#-license">License ⚖</a>
 </p>
 
+> Beginning with version v3, this project is set to maintenance mode (only small fixes, no new features) in favor of rewriting it completely in rust.
+> Go bindings for the finished rust rewrite will be provided.
+
 # 🖥️ CLI
 
 ## ✨ Features
