@@ -205,6 +205,7 @@ const (
 	CommentsOrderDesc                   = "desc"
 )
 
+// CommentsSortType specified after which factor Episode.Comments should be sorted.
 type CommentsSortType string
 
 const (

@@ -8,6 +8,7 @@ import (
 	"time"
 )
 
+//Comment contains all information about a comment.
 type Comment struct {
 	crunchy *Crunchyroll
 

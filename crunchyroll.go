@@ -204,6 +204,8 @@ func postLogin(loginResp loginResponse, etpRt string, locale LOCALE, client *htt
 	return crunchy, nil
 }
 
+// Crunchyroll is the base struct which is needed for every request and contains the most important information.
+// Use LoginWithCredentials, LoginWithEtpRt or LoginWithSessionID to create a new instance.
 type Crunchyroll struct {
 	// Client is the http.Client to perform all requests over.
 	Client *http.Client

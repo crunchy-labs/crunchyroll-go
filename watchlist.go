@@ -16,6 +16,7 @@ const (
 	WatchlistLanguageDubbed
 )
 
+// WatchlistOrderType represents how Crunchyroll.Watchlist entries should be ordered.
 type WatchlistOrderType string
 
 const (

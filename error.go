@@ -5,6 +5,7 @@ import (
 	"net/http"
 )
 
+// RequestError is an error interface which gets used whenever a crunchyroll delivers an error response.
 type RequestError struct {
 	error
 

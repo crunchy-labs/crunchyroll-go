@@ -28,6 +28,7 @@ func (c *Crunchyroll) Crunchylists() (*Crunchylists, error) {
 	return crunchylists, nil
 }
 
+// Crunchylists contains all information about a crunchylists
 type Crunchylists struct {
 	crunchy *Crunchyroll
 
@@ -58,6 +59,7 @@ func (cl *Crunchylists) Create(name string) (*Crunchylist, error) {
 	return crunchylistFromID(cl.crunchy, jsonBody["list_id"].(string))
 }
 
+//CrunchylistPreview is a preview to Crunchylist.
 type CrunchylistPreview struct {
 	crunchy *Crunchyroll
 
@@ -73,6 +75,7 @@ func (clp *CrunchylistPreview) Crunchylist() (*Crunchylist, error) {
 	return crunchylistFromID(clp.crunchy, clp.ListID)
 }
 
+// Crunchylist contains information about a crunchylist.
 type Crunchylist struct {
 	crunchy *Crunchyroll
 
@@ -160,6 +163,7 @@ func crunchylistFromID(crunchy *Crunchyroll, id string) (*Crunchylist, error) {
 	return crunchyList, nil
 }
 
+// CrunchylistItem represents a series, saved in Crunchylist.
 type CrunchylistItem struct {
 	crunchy *Crunchyroll
 

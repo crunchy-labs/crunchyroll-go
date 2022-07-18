@@ -4,6 +4,7 @@ import (
 	"github.com/grafov/m3u8"
 )
 
+// FormatType represents if Format is an episode or a movie.
 type FormatType string
 
 const (
