@@ -37,12 +37,13 @@ const (
 )
 
 type loginResponse struct {
-	AccessToken string `json:"access_token"`
-	ExpiresIn   int    `json:"expires_in"`
-	TokenType   string `json:"token_type"`
-	Scope       string `json:"scope"`
-	Country     string `json:"country"`
-	AccountID   string `json:"account_id"`
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
+	ExpiresIn    int    `json:"expires_in"`
+	TokenType    string `json:"token_type"`
+	Scope        string `json:"scope"`
+	Country      string `json:"country"`
+	AccountID    string `json:"account_id"`
 }
 
 // LoginWithCredentials logs in via crunchyroll username or email and password.
@@ -52,6 +53,7 @@ func LoginWithCredentials(user string, password string, locale LOCALE, client *h
 	values.Set("username", user)
 	values.Set("password", password)
 	values.Set("grant_type", "password")
+	values.Set("scope", "offline_access")
 
 	req, err := http.NewRequest(http.MethodPost, endpoint, bytes.NewBufferString(values.Encode()))
 	if err != nil {
@@ -69,15 +71,7 @@ func LoginWithCredentials(user string, password string, locale LOCALE, client *h
 	var loginResp loginResponse
 	json.NewDecoder(resp.Body).Decode(&loginResp)
 
-	var etpRt string
-	for _, cookie := range resp.Cookies() {
-		if cookie.Name == "etp_rt" {
-			etpRt = cookie.Value
-			break
-		}
-	}
-
-	return postLogin(loginResp, etpRt, locale, client)
+	return postLogin(loginResp, loginResp.RefreshToken, locale, client)
 }
 
 // LoginWithSessionID logs in via a crunchyroll session id.
