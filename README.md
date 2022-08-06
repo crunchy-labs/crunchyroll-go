@@ -1,56 +1,53 @@
 # crunchyroll-go
 
-A [go](https://golang.org) written library for the undocumented [crunchyroll](https://www.crunchyroll.com) api.
+A [Go](https://golang.org) library & cli for the undocumented [crunchyroll](https://www.crunchyroll.com) api. To use it, you need a crunchyroll premium account to for full (api) access.
 
 <p align="center">
-  <a href="https://github.com/crunchy-labs/crunchyroll-go">
-    <img src="https://img.shields.io/github/languages/code-size/crunchy-labs/crunchyroll-go?style=flat-square" alt="Code size">
+  <a href="https://github.com/ByteDream/crunchyroll-go">
+    <img src="https://img.shields.io/github/languages/code-size/ByteDream/crunchyroll-go?style=flat-square" alt="Code size">
   </a>
-  <a href="https://github.com/crunchy-labs/crunchyroll-go/blob/master/LICENSE">
-    <img src="https://img.shields.io/github/license/crunchy-labs/crunchyroll-go?style=flat-square" alt="License">
+  <a href="https://github.com/ByteDream/crunchyroll-go/releases/latest">
+    <img src="https://img.shields.io/github/downloads/ByteDream/crunchyroll-go/total?style=flat-square" alt="Download Badge">
+  </a>
+  <a href="https://github.com/ByteDream/crunchyroll-go/blob/master/LICENSE">
+    <img src="https://img.shields.io/github/license/ByteDream/crunchyroll-go?style=flat-square" alt="License">
   </a>
   <a href="https://golang.org">
-    <img src="https://img.shields.io/github/go-mod/go-version/crunchy-labs/crunchyroll-go?style=flat-square" alt="Go version">
+    <img src="https://img.shields.io/github/go-mod/go-version/ByteDream/crunchyroll-go?style=flat-square" alt="Go version">
   </a>
-  <a href="https://discord.gg/PXGPGpQxgk">
-    <img src="https://img.shields.io/discord/994882878125121596?label=discord&style=flat-square" alt="Discord">
+  <a href="https://github.com/ByteDream/crunchyroll-go/releases/latest">
+    <img src="https://img.shields.io/github/v/release/ByteDream/crunchyroll-go?style=flat-square" alt="Release">
   </a>
-  <a href="https://github.com/crunchy-labs/crunchyroll-go/actions/workflows/ci.yml">
-    <img src="https://github.com/crunchy-labs/crunchyroll-go/workflows/CI/badge.svg?style=flat" alt="CI">
+  <a href="https://discord.gg/gUWwekeNNg">
+    <img src="https://img.shields.io/discord/915659846836162561?label=discord&style=flat-square" alt="Discord">
+  </a>
+  <a href="https://github.com/ByteDream/crunchyroll-go/actions/workflows/ci.yml">
+    <img src="https://github.com/ByteDream/crunchyroll-go/workflows/CI/badge.svg?style=flat" alt="CI">
   </a>
 </p>
 
-<p align="center">
-  <a href="#-library">Library 📚</a>
-  •
-  <a href="#%EF%B8%8F-disclaimer">Disclaimer ☝️</a>
-  •
-  <a href="#-license">License ⚖</a>
-</p>
+> Beginning with version v3, this project is set to maintenance mode (only small fixes, no new features) in favor of rewriting it completely in Rust.
+> Go bindings for the finished rust rewrite will be provided.
 
-_This repo originally contained a cli client too but to provide more flexibility it got moved to its own repository.
-You can check it out [here](https://github.com/crunchy-labs/crunchy-cli). For more context see [this issue](https://github.com/crunchy-labs/crunchy-cli/issues/39)._
-
-# 📚 Library
-
-**_The following part will be reworked soon!_**
+## 📥 Download
 
 Download the library via `go get`
 
 ```shell
-$ go get github.com/crunchy-labs/crunchyroll-go/v2
+$ go get github.com/crunchy-labs/crunchyroll-go/v3
 ```
 
-The documentation is available on [pkg.go.dev](https://pkg.go.dev/github.com/crunchy-labs/crunchyroll-go/v2).
+## 📚 Documentation
 
-Examples how to use the library and some features of it are described in the [wiki](https://github.com/crunchy-labs/crunchyroll-go/wiki/Library).
+The documentation is available on [pkg.go.dev](https://pkg.go.dev/github.com/crunchy-labs/crunchyroll-go/v3).
 
-# ☝️ Disclaimer
+## ☂️ Coverage
 
-This tool is **ONLY** meant to be used for private purposes. To use this tool you need crunchyroll premium anyway, so there is no reason why rip and share the episodes.
+Around _90% - 95%_ of the crunchyroll beta api (at state of writing) are implemented.
+Only some endpoints on the home / index screen are missing.
+Since the library will be rewritten in Rust, I don't see any further use cases of implementing the missing endpoints in this project.
+They would be useless for 99% of the library usage anyway, unless you want to rebuild crunchyroll on top of it (or for whatever reason you want to implement home screen endpoints).
 
-**The responsibility for what happens to the downloaded videos lies entirely with the user who downloaded them.**
-
-# ⚖ License
+## ⚖ License
 
 This project is licensed under the GNU Lesser General Public License v3.0 (LGPL-3.0) - see the [LICENSE](LICENSE) file for more details.

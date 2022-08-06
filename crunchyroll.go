@@ -8,8 +8,6 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"regexp"
-	"strconv"
 	"strings"
 )
 
@@ -30,6 +28,178 @@ const (
 	AR        = "ar-SA"
 )
 
+// MediaType represents a media type.
+type MediaType string
+
+const (
+	MediaTypeSeries MediaType = "series"
+	MediaTypeMovie            = "movie_listing"
+)
+
+type loginResponse struct {
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
+	ExpiresIn    int    `json:"expires_in"`
+	TokenType    string `json:"token_type"`
+	Scope        string `json:"scope"`
+	Country      string `json:"country"`
+	AccountID    string `json:"account_id"`
+}
+
+// LoginWithCredentials logs in via crunchyroll username or email and password.
+func LoginWithCredentials(user string, password string, locale LOCALE, client *http.Client) (*Crunchyroll, error) {
+	endpoint := "https://beta-api.crunchyroll.com/auth/v1/token"
+	values := url.Values{}
+	values.Set("username", user)
+	values.Set("password", password)
+	values.Set("grant_type", "password")
+	values.Set("scope", "offline_access")
+
+	req, err := http.NewRequest(http.MethodPost, endpoint, bytes.NewBufferString(values.Encode()))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Authorization", "Basic aHJobzlxM2F3dnNrMjJ1LXRzNWE6cHROOURteXRBU2Z6QjZvbXVsSzh6cUxzYTczVE1TY1k=")
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	resp, err := request(req, client)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	var loginResp loginResponse
+	json.NewDecoder(resp.Body).Decode(&loginResp)
+
+	return postLogin(loginResp, loginResp.RefreshToken, locale, client)
+}
+
+// LoginWithSessionID logs in via a crunchyroll session id.
+// Session ids are automatically generated as a cookie when visiting https://www.crunchyroll.com.
+//
+// Deprecated: Login via session id caused some trouble in the past (e.g. #15 or #30) which resulted in
+// login not working. Use LoginWithEtpRt instead. EtpRt practically the crunchyroll beta equivalent to
+// a session id.
+// The method will stay in the library until session id login is removed completely or login with it
+// does not work for a longer period of time.
+func LoginWithSessionID(sessionID string, locale LOCALE, client *http.Client) (*Crunchyroll, error) {
+	endpoint := fmt.Sprintf("https://api.crunchyroll.com/start_session.0.json?session_id=%s",
+		sessionID)
+	resp, err := client.Get(endpoint)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("failed to start session: %s", resp.Status)
+	}
+
+	var jsonBody map[string]any
+	if err = json.NewDecoder(resp.Body).Decode(&jsonBody); err != nil {
+		return nil, fmt.Errorf("failed to parse start session with session id response: %w", err)
+	}
+	if isError, ok := jsonBody["error"]; ok && isError.(bool) {
+		return nil, fmt.Errorf("invalid session id (%s): %s", jsonBody["message"].(string), jsonBody["code"])
+	}
+
+	var etpRt string
+	for _, cookie := range resp.Cookies() {
+		if cookie.Name == "etp_rt" {
+			etpRt = cookie.Value
+			break
+		}
+	}
+
+	return LoginWithEtpRt(etpRt, locale, client)
+}
+
+// LoginWithEtpRt logs in via the crunchyroll etp rt cookie. This cookie is the crunchyroll beta
+// equivalent to the classic session id.
+// The etp_rt cookie is automatically set when visiting https://beta.crunchyroll.com. Note that you
+// need a crunchyroll account to access it.
+func LoginWithEtpRt(etpRt string, locale LOCALE, client *http.Client) (*Crunchyroll, error) {
+	endpoint := "https://beta-api.crunchyroll.com/auth/v1/token"
+	grantType := url.Values{}
+	grantType.Set("grant_type", "etp_rt_cookie")
+
+	req, err := http.NewRequest(http.MethodPost, endpoint, bytes.NewBufferString(grantType.Encode()))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Add("Authorization", "Basic bm9haWhkZXZtXzZpeWcwYThsMHE6")
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.AddCookie(&http.Cookie{
+		Name:  "etp_rt",
+		Value: etpRt,
+	})
+	resp, err := request(req, client)
+	if err != nil {
+		return nil, err
+	}
+
+	var loginResp loginResponse
+	json.NewDecoder(resp.Body).Decode(&loginResp)
+
+	return postLogin(loginResp, etpRt, locale, client)
+}
+
+func postLogin(loginResp loginResponse, etpRt string, locale LOCALE, client *http.Client) (*Crunchyroll, error) {
+	crunchy := &Crunchyroll{
+		Client:  client,
+		Context: context.Background(),
+		Locale:  locale,
+		EtpRt:   etpRt,
+		cache:   true,
+	}
+
+	crunchy.Config.TokenType = loginResp.TokenType
+	crunchy.Config.AccessToken = loginResp.AccessToken
+	crunchy.Config.AccountID = loginResp.AccountID
+	crunchy.Config.CountryCode = loginResp.Country
+
+	var jsonBody map[string]any
+
+	endpoint := "https://beta-api.crunchyroll.com/index/v2"
+	resp, err := crunchy.request(endpoint, http.MethodGet)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	json.NewDecoder(resp.Body).Decode(&jsonBody)
+
+	cms := jsonBody["cms"].(map[string]any)
+	// / is trimmed so that urls which require it must be in .../{bucket}/... like format.
+	// this just looks cleaner
+	crunchy.Config.Bucket = strings.TrimPrefix(cms["bucket"].(string), "/")
+	crunchy.Config.Premium = strings.HasSuffix(crunchy.Config.Bucket, "crunchyroll")
+	crunchy.Config.Policy = cms["policy"].(string)
+	crunchy.Config.Signature = cms["signature"].(string)
+	crunchy.Config.KeyPairID = cms["key_pair_id"].(string)
+
+	endpoint = "https://beta-api.crunchyroll.com/accounts/v1/me"
+	resp, err = crunchy.request(endpoint, http.MethodGet)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	json.NewDecoder(resp.Body).Decode(&jsonBody)
+	crunchy.Config.ExternalID = jsonBody["external_id"].(string)
+
+	endpoint = "https://beta-api.crunchyroll.com/accounts/v1/me/profile"
+	resp, err = crunchy.request(endpoint, http.MethodGet)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	json.NewDecoder(resp.Body).Decode(&jsonBody)
+	crunchy.Config.MaturityRating = jsonBody["maturity_rating"].(string)
+
+	return crunchy, nil
+}
+
+// Crunchyroll is the base struct which is needed for every request and contains the most important information.
+// Use LoginWithCredentials, LoginWithEtpRt or LoginWithSessionID to create a new instance.
 type Crunchyroll struct {
 	// Client is the http.Client to perform all requests over.
 	Client *http.Client
@@ -37,13 +207,16 @@ type Crunchyroll struct {
 	Context context.Context
 	// Locale specifies in which language all results should be returned / requested.
 	Locale LOCALE
-	// SessionID is the crunchyroll session id which was used for authentication.
-	SessionID string
+	// EtpRt is the crunchyroll beta equivalent to a session id (prior SessionID field in
+	// this struct in v2 and below).
+	EtpRt string
 
 	// Config stores parameters which are needed by some api calls.
 	Config struct {
 		TokenType   string
 		AccessToken string
+
+		Bucket string
 
 		CountryCode    string
 		Premium        bool
@@ -60,210 +233,14 @@ type Crunchyroll struct {
 	cache bool
 }
 
-// LoginWithCredentials logs in via crunchyroll username or email and password.
-func LoginWithCredentials(user string, password string, locale LOCALE, client *http.Client) (*Crunchyroll, error) {
-	sessionIDEndpoint := fmt.Sprintf("https://api.crunchyroll.com/start_session.0.json?version=1.0&access_token=%s&device_type=%s&device_id=%s",
-		"LNDJgOit5yaRIWN", "com.crunchyroll.windows.desktop", "Az2srGnChW65fuxYz2Xxl1GcZQgtGgI")
-	sessResp, err := client.Get(sessionIDEndpoint)
-	if err != nil {
-		return nil, err
-	}
-	defer sessResp.Body.Close()
-
-	if sessResp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("failed to start session for credentials login: %s", sessResp.Status)
-	}
-
-	var data map[string]interface{}
-	body, _ := io.ReadAll(sessResp.Body)
-	if err = json.Unmarshal(body, &data); err != nil {
-		return nil, fmt.Errorf("failed to parse start session with credentials response: %w", err)
-	}
-
-	sessionID := data["data"].(map[string]interface{})["session_id"].(string)
-
-	loginEndpoint := "https://api.crunchyroll.com/login.0.json"
-	authValues := url.Values{}
-	authValues.Set("session_id", sessionID)
-	authValues.Set("account", user)
-	authValues.Set("password", password)
-	loginResp, err := client.Post(loginEndpoint, "application/x-www-form-urlencoded", bytes.NewBufferString(authValues.Encode()))
-	if err != nil {
-		return nil, err
-	}
-	defer loginResp.Body.Close()
-
-	if loginResp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("failed to auth with credentials: %s", loginResp.Status)
-	} else {
-		var loginRespBody map[string]interface{}
-		json.NewDecoder(loginResp.Body).Decode(&loginRespBody)
-
-		if loginRespBody["error"].(bool) {
-			return nil, fmt.Errorf("an unexpected login error occoured: %s", loginRespBody["message"])
-		}
-	}
-
-	return LoginWithSessionID(sessionID, locale, client)
-}
-
-// LoginWithSessionID logs in via a crunchyroll session id.
-// Session ids are automatically generated as a cookie when visiting https://www.crunchyroll.com.
-func LoginWithSessionID(sessionID string, locale LOCALE, client *http.Client) (*Crunchyroll, error) {
-	crunchy := &Crunchyroll{
-		Client:    client,
-		Context:   context.Background(),
-		Locale:    locale,
-		SessionID: sessionID,
-		cache:     true,
-	}
-	var endpoint string
-	var err error
-	var resp *http.Response
-	var jsonBody map[string]interface{}
-
-	// start session
-	endpoint = fmt.Sprintf("https://api.crunchyroll.com/start_session.0.json?session_id=%s",
-		sessionID)
-	resp, err = client.Get(endpoint)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("failed to start session: %s", resp.Status)
-	}
-
-	if err = json.NewDecoder(resp.Body).Decode(&jsonBody); err != nil {
-		return nil, fmt.Errorf("failed to parse start session with session id response: %w", err)
-	}
-	if isError, ok := jsonBody["error"]; ok && isError.(bool) {
-		return nil, fmt.Errorf("invalid session id (%s): %s", jsonBody["message"].(string), jsonBody["code"])
-	}
-	data := jsonBody["data"].(map[string]interface{})
-
-	crunchy.Config.CountryCode = data["country_code"].(string)
-
-	var etpRt string
-	for _, cookie := range resp.Cookies() {
-		if cookie.Name == "etp_rt" {
-			etpRt = cookie.Value
-			break
-		}
-	}
-
-	// token
-	endpoint = "https://beta-api.crunchyroll.com/auth/v1/token"
-	grantType := url.Values{}
-	grantType.Set("grant_type", "etp_rt_cookie")
-
-	authRequest, err := http.NewRequest(http.MethodPost, endpoint, bytes.NewBufferString(grantType.Encode()))
-	if err != nil {
-		return nil, err
-	}
-	authRequest.Header.Add("Authorization", "Basic bm9haWhkZXZtXzZpeWcwYThsMHE6")
-	authRequest.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-	authRequest.AddCookie(&http.Cookie{
-		Name:  "session_id",
-		Value: sessionID,
-	})
-	authRequest.AddCookie(&http.Cookie{
-		Name:  "etp_rt",
-		Value: etpRt,
-	})
-
-	resp, err = client.Do(authRequest)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-	if err = json.NewDecoder(resp.Body).Decode(&jsonBody); err != nil {
-		return nil, fmt.Errorf("failed to parse 'token' response: %w", err)
-	}
-	crunchy.Config.TokenType = jsonBody["token_type"].(string)
-	crunchy.Config.AccessToken = jsonBody["access_token"].(string)
-
-	// index
-	endpoint = "https://beta-api.crunchyroll.com/index/v2"
-	resp, err = crunchy.request(endpoint)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-	if err = json.NewDecoder(resp.Body).Decode(&jsonBody); err != nil {
-		return nil, fmt.Errorf("failed to parse 'index' response: %w", err)
-	}
-	cms := jsonBody["cms"].(map[string]interface{})
-
-	if strings.Contains(cms["bucket"].(string), "crunchyroll") {
-		crunchy.Config.Premium = true
-		crunchy.Config.Channel = "crunchyroll"
-	} else {
-		crunchy.Config.Premium = false
-		crunchy.Config.Channel = "-"
-	}
-	crunchy.Config.Policy = cms["policy"].(string)
-	crunchy.Config.Signature = cms["signature"].(string)
-	crunchy.Config.KeyPairID = cms["key_pair_id"].(string)
-
-	// me
-	endpoint = "https://beta-api.crunchyroll.com/accounts/v1/me"
-	resp, err = crunchy.request(endpoint)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-	if err = json.NewDecoder(resp.Body).Decode(&jsonBody); err != nil {
-		return nil, fmt.Errorf("failed to parse 'me' response: %w", err)
-	}
-
-	crunchy.Config.AccountID = jsonBody["account_id"].(string)
-	crunchy.Config.ExternalID = jsonBody["external_id"].(string)
-
-	//profile
-	endpoint = "https://beta-api.crunchyroll.com/accounts/v1/me/profile"
-	resp, err = crunchy.request(endpoint)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-	if err = json.NewDecoder(resp.Body).Decode(&jsonBody); err != nil {
-		return nil, fmt.Errorf("failed to parse 'profile' response: %w", err)
-	}
-
-	crunchy.Config.MaturityRating = jsonBody["maturity_rating"].(string)
-
-	return crunchy, nil
-}
-
-// request is a base function which handles api requests.
-func (c *Crunchyroll) request(endpoint string) (*http.Response, error) {
-	req, err := http.NewRequest(http.MethodGet, endpoint, nil)
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Add("Authorization", fmt.Sprintf("%s %s", c.Config.TokenType, c.Config.AccessToken))
-
-	resp, err := c.Client.Do(req)
-	if err == nil {
-		defer resp.Body.Close()
-		bodyAsBytes, _ := io.ReadAll(resp.Body)
-		defer resp.Body.Close()
-		if resp.StatusCode == http.StatusUnauthorized {
-			return nil, fmt.Errorf("invalid access token")
-		} else {
-			var errStruct struct {
-				Message string `json:"message"`
-			}
-			json.NewDecoder(bytes.NewBuffer(bodyAsBytes)).Decode(&errStruct)
-			if errStruct.Message != "" {
-				return nil, fmt.Errorf(errStruct.Message)
-			}
-		}
-		resp.Body = io.NopCloser(bytes.NewBuffer(bodyAsBytes))
-	}
-	return resp, err
+// InvalidateSession logs the user out which invalidates the current session.
+// You have to call a login method again and create a new Crunchyroll instance
+// if you want to perform any further actions since this instance is not usable
+// anymore after calling this.
+func (c *Crunchyroll) InvalidateSession() error {
+	endpoint := "https://crunchyroll.com/logout"
+	_, err := c.request(endpoint, http.MethodGet)
+	return err
 }
 
 // IsCaching returns if data gets cached or not.
@@ -280,169 +257,67 @@ func (c *Crunchyroll) SetCaching(caching bool) {
 	c.cache = caching
 }
 
-// Search searches a query and returns all found series and movies within the given limit.
-func (c *Crunchyroll) Search(query string, limit uint) (s []*Series, m []*Movie, err error) {
-	searchEndpoint := fmt.Sprintf("https://beta-api.crunchyroll.com/content/v1/search?q=%s&n=%d&type=&locale=%s",
-		query, limit, c.Locale)
-	resp, err := c.request(searchEndpoint)
-	if err != nil {
-		return nil, nil, err
-	}
-	defer resp.Body.Close()
-
-	var jsonBody map[string]interface{}
-	if err = json.NewDecoder(resp.Body).Decode(&jsonBody); err != nil {
-		return nil, nil, fmt.Errorf("failed to parse 'search' response: %w", err)
-	}
-
-	for _, item := range jsonBody["items"].([]interface{}) {
-		item := item.(map[string]interface{})
-		if item["total"].(float64) > 0 {
-			switch item["type"] {
-			case "series":
-				for _, series := range item["items"].([]interface{}) {
-					series2 := &Series{
-						crunchy: c,
-					}
-					if err := decodeMapToStruct(series, series2); err != nil {
-						return nil, nil, err
-					}
-					if err := decodeMapToStruct(series.(map[string]interface{})["series_metadata"].(map[string]interface{}), series2); err != nil {
-						return nil, nil, err
-					}
-
-					s = append(s, series2)
-				}
-			case "movie_listing":
-				for _, movie := range item["items"].([]interface{}) {
-					movie2 := &Movie{
-						crunchy: c,
-					}
-					if err := decodeMapToStruct(movie, movie2); err != nil {
-						return nil, nil, err
-					}
-
-					m = append(m, movie2)
-				}
-			}
-		}
-	}
-
-	return s, m, nil
-}
-
-// FindVideoByName finds a Video (Season or Movie) by its name.
-// Use this in combination with ParseVideoURL and hand over the corresponding results
-// to this function.
-//
-// Deprecated: Use Search instead. The first result sometimes isn't the correct one
-// so this function is inaccurate in some cases.
-// See https://github.com/crunchy-labs/crunchyroll-go/issues/22 for more information.
-func (c *Crunchyroll) FindVideoByName(seriesName string) (Video, error) {
-	s, m, err := c.Search(seriesName, 1)
+// request is a base function which handles simple api requests.
+func (c *Crunchyroll) request(endpoint string, method string) (*http.Response, error) {
+	req, err := http.NewRequest(method, endpoint, nil)
 	if err != nil {
 		return nil, err
 	}
-
-	if len(s) > 0 {
-		return s[0], nil
-	} else if len(m) > 0 {
-		return m[0], nil
-	}
-	return nil, fmt.Errorf("no series or movie could be found")
+	return c.requestFull(req)
 }
 
-// FindEpisodeByName finds an episode by its crunchyroll series name and episode title.
-// Use this in combination with ParseEpisodeURL and hand over the corresponding results
-// to this function.
-func (c *Crunchyroll) FindEpisodeByName(seriesName, episodeTitle string) ([]*Episode, error) {
-	series, _, err := c.Search(seriesName, 5)
-	if err != nil {
-		return nil, err
-	}
+// requestFull is a base function which handles full user controlled api requests.
+func (c *Crunchyroll) requestFull(req *http.Request) (*http.Response, error) {
+	req.Header.Add("Authorization", fmt.Sprintf("%s %s", c.Config.TokenType, c.Config.AccessToken))
 
-	var matchingEpisodes []*Episode
-	for _, s := range series {
-		seasons, err := s.Seasons()
-		if err != nil {
-			return nil, err
-		}
+	return request(req, c.Client)
+}
 
-		for _, season := range seasons {
-			episodes, err := season.Episodes()
-			if err != nil {
-				return nil, err
+func request(req *http.Request, client *http.Client) (*http.Response, error) {
+	resp, err := client.Do(req)
+	if err == nil {
+		var buf bytes.Buffer
+		io.Copy(&buf, resp.Body)
+		defer resp.Body.Close()
+		defer func() {
+			resp.Body = io.NopCloser(&buf)
+		}()
+
+		if buf.Len() != 0 {
+			var errMap map[string]any
+
+			if err = json.Unmarshal(buf.Bytes(), &errMap); err != nil {
+				return nil, &RequestError{Response: resp, Message: fmt.Sprintf("invalid json response: %w", err)}
 			}
-			for _, episode := range episodes {
-				if episode.SlugTitle == episodeTitle {
-					matchingEpisodes = append(matchingEpisodes, episode)
+
+			if val, ok := errMap["error"]; ok {
+				if errorAsString, ok := val.(string); ok {
+					if code, ok := errMap["code"].(string); ok {
+						return nil, &RequestError{Response: resp, Message: fmt.Sprintf("%s - %s", errorAsString, code)}
+					}
+					return nil, &RequestError{Response: resp, Message: errorAsString}
+				} else if errorAsBool, ok := val.(bool); ok && errorAsBool {
+					if msg, ok := errMap["message"].(string); ok {
+						return nil, &RequestError{Response: resp, Message: msg}
+					}
+				}
+			} else if _, ok := errMap["code"]; ok {
+				if errContext, ok := errMap["context"].([]any); ok && len(errContext) > 0 {
+					errField := errContext[0].(map[string]any)
+					var code string
+					if code, ok = errField["message"].(string); !ok {
+						code = errField["code"].(string)
+					}
+					return nil, &RequestError{Response: resp, Message: fmt.Sprintf("%s - %s", code, errField["field"].(string))}
+				} else if errMessage, ok := errMap["message"].(string); ok {
+					return nil, &RequestError{Response: resp, Message: errMessage}
 				}
 			}
 		}
-	}
 
-	return matchingEpisodes, nil
-}
-
-// ParseVideoURL tries to extract the crunchyroll series / movie name out of the given url.
-//
-// Deprecated: Crunchyroll classic urls are sometimes not safe to use, use ParseBetaSeriesURL
-// if possible since beta url are always safe to use.
-// The method will stay in the library until only beta urls are supported by crunchyroll itself.
-func ParseVideoURL(url string) (seriesName string, ok bool) {
-	pattern := regexp.MustCompile(`(?m)^https?://(www\.)?crunchyroll\.com(/\w{2}(-\w{2})?)?/(?P<series>[^/]+)(/videos)?/?$`)
-	if urlMatch := pattern.FindAllStringSubmatch(url, -1); len(urlMatch) != 0 {
-		groups := regexGroups(urlMatch, pattern.SubexpNames()...)
-		seriesName = groups["series"]
-
-		if seriesName != "" {
-			ok = true
+		if resp.StatusCode >= 400 {
+			return nil, &RequestError{Response: resp, Message: resp.Status}
 		}
 	}
-	return
-}
-
-// ParseEpisodeURL tries to extract the crunchyroll series name, title, episode number and web id out of the given crunchyroll url
-// Note that the episode number can be misleading. For example if an episode has the episode number 23.5 (slime isekai)
-// the episode number will be 235.
-//
-// Deprecated: Crunchyroll classic urls are sometimes not safe to use, use ParseBetaEpisodeURL
-// if possible since beta url are always safe to use.
-// The method will stay in the library until only beta urls are supported by crunchyroll itself.
-func ParseEpisodeURL(url string) (seriesName, title string, episodeNumber int, webId int, ok bool) {
-	pattern := regexp.MustCompile(`(?m)^https?://(www\.)?crunchyroll\.com(/\w{2}(-\w{2})?)?/(?P<series>[^/]+)/episode-(?P<number>\d+)-(?P<title>.+)-(?P<webId>\d+).*`)
-	if urlMatch := pattern.FindAllStringSubmatch(url, -1); len(urlMatch) != 0 {
-		groups := regexGroups(urlMatch, pattern.SubexpNames()...)
-		seriesName = groups["series"]
-		episodeNumber, _ = strconv.Atoi(groups["number"])
-		title = groups["title"]
-		webId, _ = strconv.Atoi(groups["webId"])
-
-		if seriesName != "" && title != "" && webId != 0 {
-			ok = true
-		}
-	}
-	return
-}
-
-// ParseBetaSeriesURL tries to extract the season id of the given crunchyroll beta url, pointing to a season.
-func ParseBetaSeriesURL(url string) (seasonId string, ok bool) {
-	pattern := regexp.MustCompile(`(?m)^https?://(www\.)?beta\.crunchyroll\.com/(\w{2}/)?series/(?P<seasonId>\w+).*`)
-	if urlMatch := pattern.FindAllStringSubmatch(url, -1); len(urlMatch) != 0 {
-		groups := regexGroups(urlMatch, pattern.SubexpNames()...)
-		seasonId = groups["seasonId"]
-		ok = true
-	}
-	return
-}
-
-// ParseBetaEpisodeURL tries to extract the episode id of the given crunchyroll beta url, pointing to an episode.
-func ParseBetaEpisodeURL(url string) (episodeId string, ok bool) {
-	pattern := regexp.MustCompile(`(?m)^https?://(www\.)?beta\.crunchyroll\.com/(\w{2}/)?watch/(?P<episodeId>\w+).*`)
-	if urlMatch := pattern.FindAllStringSubmatch(url, -1); len(urlMatch) != 0 {
-		groups := regexGroups(urlMatch, pattern.SubexpNames()...)
-		episodeId = groups["episodeId"]
-		ok = true
-	}
-	return
+	return resp, err
 }

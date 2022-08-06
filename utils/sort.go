@@ -1,7 +1,7 @@
 package utils
 
 import (
-	"github.com/crunchy-labs/crunchyroll-go/v2"
+	"github.com/crunchy-labs/crunchyroll-go/v3"
 	"sort"
 	"strconv"
 	"strings"
@@ -52,6 +52,9 @@ func SortEpisodesByAudio(episodes []*crunchyroll.Episode) (map[crunchyroll.LOCAL
 	var wg sync.WaitGroup
 	var lock sync.Mutex
 	for _, episode := range episodes {
+		if !episode.Available() {
+			continue
+		}
 		episode := episode
 		wg.Add(1)
 		go func() {
