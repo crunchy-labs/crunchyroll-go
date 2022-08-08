@@ -71,15 +71,14 @@ func LoginWithCredentials(user string, password string, locale LOCALE, client *h
 	var loginResp loginResponse
 	json.NewDecoder(resp.Body).Decode(&loginResp)
 
-	return postLogin(loginResp, loginResp.RefreshToken, locale, client)
+	return postLogin(loginResp, locale, client)
 }
 
 // LoginWithSessionID logs in via a crunchyroll session id.
 // Session ids are automatically generated as a cookie when visiting https://www.crunchyroll.com.
 //
 // Deprecated: Login via session id caused some trouble in the past (e.g. #15 or #30) which resulted in
-// login not working. Use LoginWithEtpRt instead. EtpRt practically the crunchyroll beta equivalent to
-// a session id.
+// login not working. Use LoginWithRefreshToken instead.
 // The method will stay in the library until session id login is removed completely or login with it
 // does not work for a longer period of time.
 func LoginWithSessionID(sessionID string, locale LOCALE, client *http.Client) (*Crunchyroll, error) {
@@ -111,28 +110,26 @@ func LoginWithSessionID(sessionID string, locale LOCALE, client *http.Client) (*
 		}
 	}
 
-	return LoginWithEtpRt(etpRt, locale, client)
+	return LoginWithRefreshToken(etpRt, locale, client)
 }
 
-// LoginWithEtpRt logs in via the crunchyroll etp rt cookie. This cookie is the crunchyroll beta
-// equivalent to the classic session id.
+// LoginWithRefreshToken logs in via the crunchyroll refresh token.
+// It can be obtained by copying the etp_rt cookie from beta.crunchyroll.com.
 // The etp_rt cookie is automatically set when visiting https://beta.crunchyroll.com. Note that you
 // need a crunchyroll account to access it.
-func LoginWithEtpRt(etpRt string, locale LOCALE, client *http.Client) (*Crunchyroll, error) {
+func LoginWithRefreshToken(refreshToken string, locale LOCALE, client *http.Client) (*Crunchyroll, error) {
 	endpoint := "https://beta-api.crunchyroll.com/auth/v1/token"
 	grantType := url.Values{}
-	grantType.Set("grant_type", "etp_rt_cookie")
+	grantType.Set("refresh_token", refreshToken)
+	grantType.Set("grant_type", "refresh_token")
+	grantType.Set("scope", "offline_access")
 
 	req, err := http.NewRequest(http.MethodPost, endpoint, bytes.NewBufferString(grantType.Encode()))
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Add("Authorization", "Basic bm9haWhkZXZtXzZpeWcwYThsMHE6")
+	req.Header.Set("Authorization", "Basic aHJobzlxM2F3dnNrMjJ1LXRzNWE6cHROOURteXRBU2Z6QjZvbXVsSzh6cUxzYTczVE1TY1k=")
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	req.AddCookie(&http.Cookie{
-		Name:  "etp_rt",
-		Value: etpRt,
-	})
 	resp, err := request(req, client)
 	if err != nil {
 		return nil, err
@@ -141,16 +138,16 @@ func LoginWithEtpRt(etpRt string, locale LOCALE, client *http.Client) (*Crunchyr
 	var loginResp loginResponse
 	json.NewDecoder(resp.Body).Decode(&loginResp)
 
-	return postLogin(loginResp, etpRt, locale, client)
+	return postLogin(loginResp, locale, client)
 }
 
-func postLogin(loginResp loginResponse, etpRt string, locale LOCALE, client *http.Client) (*Crunchyroll, error) {
+func postLogin(loginResp loginResponse, locale LOCALE, client *http.Client) (*Crunchyroll, error) {
 	crunchy := &Crunchyroll{
-		Client:  client,
-		Context: context.Background(),
-		Locale:  locale,
-		EtpRt:   etpRt,
-		cache:   true,
+		Client:       client,
+		Context:      context.Background(),
+		Locale:       locale,
+		RefreshToken: loginResp.RefreshToken,
+		cache:        true,
 	}
 
 	crunchy.Config.TokenType = loginResp.TokenType
@@ -199,7 +196,7 @@ func postLogin(loginResp loginResponse, etpRt string, locale LOCALE, client *htt
 }
 
 // Crunchyroll is the base struct which is needed for every request and contains the most important information.
-// Use LoginWithCredentials, LoginWithEtpRt or LoginWithSessionID to create a new instance.
+// Use LoginWithCredentials, LoginWithRefreshToken or LoginWithSessionID to create a new instance.
 type Crunchyroll struct {
 	// Client is the http.Client to perform all requests over.
 	Client *http.Client
@@ -207,9 +204,9 @@ type Crunchyroll struct {
 	Context context.Context
 	// Locale specifies in which language all results should be returned / requested.
 	Locale LOCALE
-	// EtpRt is the crunchyroll beta equivalent to a session id (prior SessionID field in
+	// RefreshToken is the crunchyroll beta equivalent to a session id (prior SessionID field in
 	// this struct in v2 and below).
-	EtpRt string
+	RefreshToken string
 
 	// Config stores parameters which are needed by some api calls.
 	Config struct {
