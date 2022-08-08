@@ -287,7 +287,7 @@ func request(req *http.Request, client *http.Client) (*http.Response, error) {
 			var errMap map[string]any
 
 			if err = json.Unmarshal(buf.Bytes(), &errMap); err != nil {
-				return nil, &RequestError{Response: resp, Message: fmt.Sprintf("invalid json response: %w", err)}
+				return nil, &RequestError{Response: resp, Message: fmt.Sprintf("invalid json response: %v", err)}
 			}
 
 			if val, ok := errMap["error"]; ok {
