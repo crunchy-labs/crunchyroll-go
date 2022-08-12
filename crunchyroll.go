@@ -132,7 +132,28 @@ func LoginWithRefreshToken(refreshToken string, locale LOCALE, client *http.Clie
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	resp, err := request(req, client)
 	if err != nil {
-		return nil, err
+		if reqErr := err.(*RequestError); reqErr != nil && reqErr.Response.StatusCode == http.StatusBadRequest {
+			endpoint = "https://beta.crunchyroll.com/auth/v1/token"
+			grantType = url.Values{}
+			grantType.Set("grant_type", "etp_rt_cookie")
+			grantType.Set("scope", "offline_access")
+
+			req, err := http.NewRequest(http.MethodPost, endpoint, bytes.NewBufferString(grantType.Encode()))
+			if err != nil {
+				return nil, err
+			}
+			req.Header.Set("Authorization", "Basic bm9haWhkZXZtXzZpeWcwYThsMHE6")
+			req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+			req.AddCookie(&http.Cookie{
+				Name:  "etp_rt",
+				Value: refreshToken,
+			})
+			if resp, err = request(req, client); err != nil {
+				return nil, err
+			}
+		} else {
+			return nil, err
+		}
 	}
 
 	var loginResp loginResponse
