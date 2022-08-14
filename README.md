@@ -26,6 +26,8 @@ A [Go](https://golang.org) library & cli for the undocumented [crunchyroll](http
   </a>
 </p>
 
+**If you're searching for the command line client, head over to _[crunchy-cli](https://github.com/crunchy-labs/crunchy-cli)_. This repo only contains the golang crunchyroll library!**
+
 > Beginning with version v3, this project is set to maintenance mode (only small fixes, no new features) in favor of rewriting it completely in Rust.
 > Go bindings for the finished rust rewrite will be provided.
 
