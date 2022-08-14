@@ -2,6 +2,8 @@
 
 A [Go](https://golang.org) library & cli for the undocumented [crunchyroll](https://www.crunchyroll.com) api. To use it, you need a crunchyroll premium account to for full (api) access.
 
+**If you're searching for the command line client, head over to _[crunchy-cli](https://github.com/crunchy-labs/crunchy-cli)_. This repo only contains the golang crunchyroll library!**
+
 <p align="center">
   <a href="https://github.com/ByteDream/crunchyroll-go">
     <img src="https://img.shields.io/github/languages/code-size/ByteDream/crunchyroll-go?style=flat-square" alt="Code size">
@@ -25,8 +27,6 @@ A [Go](https://golang.org) library & cli for the undocumented [crunchyroll](http
     <img src="https://github.com/ByteDream/crunchyroll-go/workflows/CI/badge.svg?style=flat" alt="CI">
   </a>
 </p>
-
-**If you're searching for the command line client, head over to _[crunchy-cli](https://github.com/crunchy-labs/crunchy-cli)_. This repo only contains the golang crunchyroll library!**
 
 > Beginning with version v3, this project is set to maintenance mode (only small fixes, no new features) in favor of rewriting it completely in Rust.
 > Go bindings for the finished rust rewrite will be provided.
