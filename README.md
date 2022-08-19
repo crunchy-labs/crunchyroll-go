@@ -8,9 +8,6 @@ A [Go](https://golang.org) library & cli for the undocumented [crunchyroll](http
   <a href="https://github.com/ByteDream/crunchyroll-go">
     <img src="https://img.shields.io/github/languages/code-size/ByteDream/crunchyroll-go?style=flat-square" alt="Code size">
   </a>
-  <a href="https://github.com/ByteDream/crunchyroll-go/releases/latest">
-    <img src="https://img.shields.io/github/downloads/ByteDream/crunchyroll-go/total?style=flat-square" alt="Download Badge">
-  </a>
   <a href="https://github.com/ByteDream/crunchyroll-go/blob/master/LICENSE">
     <img src="https://img.shields.io/github/license/ByteDream/crunchyroll-go?style=flat-square" alt="License">
   </a>
