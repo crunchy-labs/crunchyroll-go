@@ -9,6 +9,7 @@ var AllLocales = []crunchyroll.LOCALE{
 	crunchyroll.JP,
 	crunchyroll.US,
 	crunchyroll.LA,
+	crunchyroll.LA2,
 	crunchyroll.ES,
 	crunchyroll.FR,
 	crunchyroll.PT,
@@ -36,7 +37,7 @@ func LocaleLanguage(locale crunchyroll.LOCALE) string {
 		return "Japanese"
 	case crunchyroll.US:
 		return "English (US)"
-	case crunchyroll.LA:
+	case crunchyroll.LA, crunchyroll.LA2:
 		return "Spanish (Latin America)"
 	case crunchyroll.ES:
 		return "Spanish (Spain)"

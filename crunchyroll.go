@@ -15,17 +15,18 @@ import (
 type LOCALE string
 
 const (
-	JP LOCALE = "ja-JP"
-	US        = "en-US"
-	LA        = "es-419"
-	ES        = "es-ES"
-	FR        = "fr-FR"
-	PT        = "pt-PT"
-	BR        = "pt-BR"
-	IT        = "it-IT"
-	DE        = "de-DE"
-	RU        = "ru-RU"
-	AR        = "ar-SA"
+	JP  LOCALE = "ja-JP"
+	US         = "en-US"
+	LA         = "es-419"
+	LA2        = "es-LA"
+	ES         = "es-ES"
+	FR         = "fr-FR"
+	PT         = "pt-PT"
+	BR         = "pt-BR"
+	IT         = "it-IT"
+	DE         = "de-DE"
+	RU         = "ru-RU"
+	AR         = "ar-SA"
 )
 
 // MediaType represents a media type.
