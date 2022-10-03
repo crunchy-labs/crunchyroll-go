@@ -28,6 +28,7 @@ const (
 	RU         = "ru-RU"
 	AR         = "ar-SA"
 	ME         = "ar-ME"
+	CN         = "zh-CN"
 )
 
 // MediaType represents a media type.
