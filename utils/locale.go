@@ -19,6 +19,7 @@ var AllLocales = []crunchyroll.LOCALE{
 	crunchyroll.RU,
 	crunchyroll.AR,
 	crunchyroll.ME,
+	crunchyroll.CN,
 }
 
 // ValidateLocale validates if the given locale actually exist.
@@ -56,6 +57,8 @@ func LocaleLanguage(locale crunchyroll.LOCALE) string {
 		return "Russian"
 	case crunchyroll.AR, crunchyroll.ME:
 		return "Arabic"
+	case crunchyroll.CN:
+		return "Chinese (China)"
 	default:
 		return ""
 	}
