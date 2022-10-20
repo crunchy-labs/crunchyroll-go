@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-//Comment contains all information about a comment.
+// Comment contains all information about a comment.
 type Comment struct {
 	crunchy *Crunchyroll
 
@@ -58,7 +58,7 @@ func (c *Comment) Delete() error {
 	if !c.IsOwner {
 		return fmt.Errorf("cannot delete, user is not the comment author")
 	}
-	endpoint := fmt.Sprintf("https://beta.crunchyroll.com/talkbox/guestbooks/%s/comments/%s/flags?locale=%s", c.EpisodeID, c.CommentID, c.crunchy.Locale)
+	endpoint := fmt.Sprintf("https://beta-api.crunchyroll.com/talkbox/guestbooks/%s/comments/%s/flags?locale=%s", c.EpisodeID, c.CommentID, c.crunchy.Locale)
 	resp, err := c.crunchy.request(endpoint, http.MethodDelete)
 	if err != nil {
 		return err
@@ -90,7 +90,7 @@ func (c *Comment) MarkAsSpoiler() error {
 	} else if c.votedAs("spoiler") {
 		return fmt.Errorf("comment is already marked as spoiler")
 	}
-	endpoint := fmt.Sprintf("https://beta.crunchyroll.com/talkbox/guestbooks/%s/comments/%s/flags?locale=%s", c.EpisodeID, c.CommentID, c.crunchy.Locale)
+	endpoint := fmt.Sprintf("https://beta-api.crunchyroll.com/talkbox/guestbooks/%s/comments/%s/flags?locale=%s", c.EpisodeID, c.CommentID, c.crunchy.Locale)
 	body, _ := json.Marshal(map[string][]string{"add": {"spoiler"}})
 	req, err := http.NewRequest(http.MethodPatch, endpoint, bytes.NewBuffer(body))
 	if err != nil {
@@ -116,7 +116,7 @@ func (c *Comment) UnmarkAsSpoiler() error {
 	} else if !c.votedAs("spoiler") {
 		return fmt.Errorf("comment is not marked as spoiler")
 	}
-	endpoint := fmt.Sprintf("https://beta.crunchyroll.com/talkbox/guestbooks/%s/comments/%s/flags?locale=%s", c.EpisodeID, c.CommentID, c.crunchy.Locale)
+	endpoint := fmt.Sprintf("https://beta-api.crunchyroll.com/talkbox/guestbooks/%s/comments/%s/flags?locale=%s", c.EpisodeID, c.CommentID, c.crunchy.Locale)
 	body, _ := json.Marshal(map[string][]string{"remove": {"spoiler"}})
 	req, err := http.NewRequest(http.MethodPatch, endpoint, bytes.NewBuffer(body))
 	if err != nil {
@@ -161,7 +161,7 @@ func (c *Comment) RemoveLike() error {
 
 // Reply replies to the current comment.
 func (c *Comment) Reply(message string, spoiler bool) (*Comment, error) {
-	endpoint := fmt.Sprintf("https://beta.crunchyroll.com/talkbox/guestbooks/%s/comments?locale=%s", c.EpisodeID, c.crunchy.Locale)
+	endpoint := fmt.Sprintf("https://beta-api.crunchyroll.com/talkbox/guestbooks/%s/comments?locale=%s", c.EpisodeID, c.crunchy.Locale)
 	var flags []string
 	if spoiler {
 		flags = append(flags, "spoiler")
@@ -191,7 +191,7 @@ func (c *Comment) Replies(page uint, size uint) ([]*Comment, error) {
 	if c.RepliesCount == 0 {
 		return []*Comment{}, nil
 	}
-	endpoint := fmt.Sprintf("https://beta.crunchyroll.com/talkbox/guestbooks/%s/comments/%s/replies?page_size=%d&page=%d&locale=%s", c.EpisodeID, c.CommentID, size, page, c.Locale)
+	endpoint := fmt.Sprintf("https://beta-api.crunchyroll.com/talkbox/guestbooks/%s/comments/%s/replies?page_size=%d&page=%d&locale=%s", c.EpisodeID, c.CommentID, size, page, c.Locale)
 	resp, err := c.crunchy.request(endpoint, http.MethodGet)
 	if err != nil {
 		return nil, err
@@ -253,7 +253,7 @@ func (c *Comment) vote(voteType, readableName string) error {
 		return fmt.Errorf("comment is already marked as %s", readableName)
 	}
 
-	endpoint := fmt.Sprintf("https://beta.crunchyroll.com/talkbox/guestbooks/%s/comments/%s/votes?locale=%s", c.EpisodeID, c.CommentID, c.crunchy.Locale)
+	endpoint := fmt.Sprintf("https://beta-api.crunchyroll.com/talkbox/guestbooks/%s/comments/%s/votes?locale=%s", c.EpisodeID, c.CommentID, c.crunchy.Locale)
 	body, _ := json.Marshal(map[string]string{"vote_type": voteType})
 	req, err := http.NewRequest(http.MethodPost, endpoint, bytes.NewBuffer(body))
 	if err != nil {
@@ -272,7 +272,7 @@ func (c *Comment) vote(voteType, readableName string) error {
 func (c *Comment) unVote(voteType, readableName string) error {
 	for i, userVote := range c.UserVotes {
 		if userVote == voteType {
-			endpoint := fmt.Sprintf("https://beta.crunchyroll.com/talkbox/guestbooks/%s/comments/%s/votes?vote_type=%s&locale=%s", c.EpisodeID, c.CommentID, voteType, c.crunchy.Locale)
+			endpoint := fmt.Sprintf("https://beta-api.crunchyroll.com/talkbox/guestbooks/%s/comments/%s/votes?vote_type=%s&locale=%s", c.EpisodeID, c.CommentID, voteType, c.crunchy.Locale)
 			_, err := c.crunchy.request(endpoint, http.MethodDelete)
 			if err != nil {
 				return err

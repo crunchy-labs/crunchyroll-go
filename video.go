@@ -181,7 +181,7 @@ func SeriesFromID(crunchy *Crunchyroll, id string) (*Series, error) {
 // AddToWatchlist adds the current episode to the watchlist.
 // Will return an RequestError with the response status code of 409 if the series was already on the watchlist before.
 func (s *Series) AddToWatchlist() error {
-	endpoint := fmt.Sprintf("https://beta.crunchyroll.com/content/v1/watchlist/%s?locale=%s", s.crunchy.Config.AccountID, s.crunchy.Locale)
+	endpoint := fmt.Sprintf("https://beta-api.crunchyroll.com/content/v1/watchlist/%s?locale=%s", s.crunchy.Config.AccountID, s.crunchy.Locale)
 	body, _ := json.Marshal(map[string]string{"content_id": s.ID})
 	req, err := http.NewRequest(http.MethodPost, endpoint, bytes.NewBuffer(body))
 	if err != nil {
@@ -195,7 +195,7 @@ func (s *Series) AddToWatchlist() error {
 // RemoveFromWatchlist removes the current episode from the watchlist.
 // Will return an RequestError with the response status code of 404 if the series was not on the watchlist before.
 func (s *Series) RemoveFromWatchlist() error {
-	endpoint := fmt.Sprintf("https://beta.crunchyroll.com/content/v1/watchlist/%s/%s?locale=%s", s.crunchy.Config.AccountID, s.ID, s.crunchy.Locale)
+	endpoint := fmt.Sprintf("https://beta-api.crunchyroll.com/content/v1/watchlist/%s/%s?locale=%s", s.crunchy.Config.AccountID, s.ID, s.crunchy.Locale)
 	_, err := s.crunchy.request(endpoint, http.MethodDelete)
 	return err
 }
@@ -281,7 +281,7 @@ func (s *Series) Seasons() (seasons []*Season, err error) {
 
 // Rating returns the series rating.
 func (s *Series) Rating() (*Rating, error) {
-	endpoint := fmt.Sprintf("https://beta.crunchyroll.com/content-reviews/v2/user/%s/rating/series/%s", s.crunchy.Config.AccountID, s.ID)
+	endpoint := fmt.Sprintf("https://beta-api.crunchyroll.com/content-reviews/v2/user/%s/rating/series/%s", s.crunchy.Config.AccountID, s.ID)
 	resp, err := s.crunchy.request(endpoint, http.MethodGet)
 	if err != nil {
 		return nil, err
@@ -317,7 +317,7 @@ func (s *Series) Reviews(options ReviewOptions, page uint, size uint) (BulkResul
 	if err != nil {
 		return BulkResult[*UserReview]{}, err
 	}
-	endpoint := fmt.Sprintf("https://beta.crunchyroll.com/content-reviews/v2/%s/user/%s/review/series/%s/list?page=%d&page_size=%d&sort=%s&filter=%s", s.crunchy.Locale, s.crunchy.Config.AccountID, s.ID, page, size, options.Sort, options.Filter)
+	endpoint := fmt.Sprintf("https://beta-api.crunchyroll.com/content-reviews/v2/%s/user/%s/review/series/%s/list?page=%d&page_size=%d&sort=%s&filter=%s", s.crunchy.Locale, s.crunchy.Config.AccountID, s.ID, page, size, options.Sort, options.Filter)
 	resp, err := s.crunchy.request(endpoint, http.MethodGet)
 	if err != nil {
 		return BulkResult[*UserReview]{}, err
@@ -337,7 +337,7 @@ func (s *Series) Reviews(options ReviewOptions, page uint, size uint) (BulkResul
 
 // Rate rates the current series.
 func (s *Series) Rate(rating ReviewRating) error {
-	endpoint := fmt.Sprintf("https://beta.crunchyroll.com/content-reviews/v2/en-US/user/%s/review/series/%s", s.crunchy.Config.AccountID, s.ID)
+	endpoint := fmt.Sprintf("https://beta-api.crunchyroll.com/content-reviews/v2/en-US/user/%s/review/series/%s", s.crunchy.Config.AccountID, s.ID)
 	body, _ := json.Marshal(map[string]string{"rating": string(rating)})
 	req, err := http.NewRequest(http.MethodPut, endpoint, bytes.NewBuffer(body))
 	if err != nil {
@@ -353,7 +353,7 @@ func (s *Series) Rate(rating ReviewRating) error {
 // has already written a review. If this is the case, use Series.GetOwnerReview and user
 // OwnerReview.Edit to edit the review.
 func (s *Series) CreateReview(title, content string, spoiler bool) (*OwnerReview, error) {
-	endpoint := fmt.Sprintf("https://beta.crunchyroll.com/content-reviews/v2/en-US/user/%s/review/series/%s", s.crunchy.Config.AccountID, s.ID)
+	endpoint := fmt.Sprintf("https://beta-api.crunchyroll.com/content-reviews/v2/en-US/user/%s/review/series/%s", s.crunchy.Config.AccountID, s.ID)
 	body, _ := json.Marshal(map[string]any{
 		"title":   title,
 		"body":    content,
@@ -381,7 +381,7 @@ func (s *Series) CreateReview(title, content string, spoiler bool) (*OwnerReview
 // GetOwnerReview returns the series review, written by the current logged-in account.
 // Returns an error if no review was written yet.
 func (s *Series) GetOwnerReview() (*OwnerReview, error) {
-	endpoint := fmt.Sprintf("https://beta.crunchyroll.com/content-reviews/v2/en-US/user/%s/review/series/%s", s.crunchy.Config.AccountID, s.ID)
+	endpoint := fmt.Sprintf("https://beta-api.crunchyroll.com/content-reviews/v2/en-US/user/%s/review/series/%s", s.crunchy.Config.AccountID, s.ID)
 	resp, err := s.crunchy.request(endpoint, http.MethodGet)
 	if err != nil {
 		return nil, err

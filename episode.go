@@ -134,7 +134,7 @@ func EpisodeFromID(crunchy *Crunchyroll, id string) (*Episode, error) {
 // individual episode can be added to the watchlist. Even though I somehow got an episode to my watchlist on the
 // crunchyroll website, it never worked with the api here. So this function actually adds the whole series to the watchlist.
 func (e *Episode) AddToWatchlist() error {
-	endpoint := fmt.Sprintf("https://beta.crunchyroll.com/content/v1/watchlist/%s?locale=%s", e.crunchy.Config.AccountID, e.crunchy.Locale)
+	endpoint := fmt.Sprintf("https://beta-api.crunchyroll.com/content/v1/watchlist/%s?locale=%s", e.crunchy.Config.AccountID, e.crunchy.Locale)
 	body, _ := json.Marshal(map[string]string{"content_id": e.SeriesID})
 	req, err := http.NewRequest(http.MethodPost, endpoint, bytes.NewBuffer(body))
 	if err != nil {
@@ -148,7 +148,7 @@ func (e *Episode) AddToWatchlist() error {
 // RemoveFromWatchlist removes the current episode from the watchlist.
 // Will return an RequestError with the response status code of 404 if the series was not on the watchlist before.
 func (e *Episode) RemoveFromWatchlist() error {
-	endpoint := fmt.Sprintf("https://beta.crunchyroll.com/content/v1/watchlist/%s/%s?locale=%s", e.crunchy.Config.AccountID, e.SeriesID, e.crunchy.Locale)
+	endpoint := fmt.Sprintf("https://beta-api.crunchyroll.com/content/v1/watchlist/%s/%s?locale=%s", e.crunchy.Config.AccountID, e.SeriesID, e.crunchy.Locale)
 	_, err := e.crunchy.request(endpoint, http.MethodDelete)
 	return err
 }
@@ -169,7 +169,7 @@ func (e *Episode) AudioLocale() (LOCALE, error) {
 
 // Comment creates a new comment under the episode.
 func (e *Episode) Comment(message string, spoiler bool) (*Comment, error) {
-	endpoint := fmt.Sprintf("https://beta.crunchyroll.com/talkbox/guestbooks/%s/comments?locale=%s", e.ID, e.crunchy.Locale)
+	endpoint := fmt.Sprintf("https://beta-api.crunchyroll.com/talkbox/guestbooks/%s/comments?locale=%s", e.ID, e.crunchy.Locale)
 	var flags []string
 	if spoiler {
 		flags = append(flags, "spoiler")
@@ -227,7 +227,7 @@ func (e *Episode) Comments(options CommentsOptions, page uint, size uint) (c []*
 	if err != nil {
 		return nil, err
 	}
-	endpoint := fmt.Sprintf("https://beta.crunchyroll.com/talkbox/guestbooks/%s/comments?page=%d&page_size=%d&order=%s&sort=%s&locale=%s", e.ID, page, size, options.Order, options.Sort, e.crunchy.Locale)
+	endpoint := fmt.Sprintf("https://beta-api.crunchyroll.com/talkbox/guestbooks/%s/comments?page=%d&page_size=%d&order=%s&sort=%s&locale=%s", e.ID, page, size, options.Order, options.Sort, e.crunchy.Locale)
 	resp, err := e.crunchy.request(endpoint, http.MethodGet)
 	if err != nil {
 		return nil, err

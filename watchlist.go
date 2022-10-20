@@ -60,7 +60,7 @@ func (c *Crunchyroll) Watchlist(options WatchlistOptions, limit uint) ([]*Watchl
 	values.Set("n", strconv.Itoa(int(limit)))
 	values.Set("locale", string(c.Locale))
 
-	endpoint := fmt.Sprintf("https://beta.crunchyroll.com/content/v1/%s/watchlist?%s", c.Config.AccountID, values.Encode())
+	endpoint := fmt.Sprintf("https://beta-api.crunchyroll.com/content/v1/%s/watchlist?%s", c.Config.AccountID, values.Encode())
 	resp, err := c.request(endpoint, http.MethodGet)
 	if err != nil {
 		return nil, err

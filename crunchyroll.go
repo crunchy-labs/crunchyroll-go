@@ -78,7 +78,7 @@ func LoginWithCredentials(user string, password string, locale LOCALE, client *h
 }
 
 // LoginWithSessionID logs in via a crunchyroll session id.
-// Session ids are automatically generated as a cookie when visiting https://www.crunchyroll.com.
+// Session ids are automatically generated as a cookie when visiting https://beta-api.crunchyroll.com.
 //
 // Deprecated: Login via session id caused some trouble in the past (e.g. #15 or #30) which resulted in
 // login not working. Use LoginWithRefreshToken instead.
@@ -118,7 +118,7 @@ func LoginWithSessionID(sessionID string, locale LOCALE, client *http.Client) (*
 
 // LoginWithRefreshToken logs in via the crunchyroll refresh token.
 // It can be obtained by copying the etp_rt cookie from beta.crunchyroll.com.
-// The etp_rt cookie is automatically set when visiting https://beta.crunchyroll.com. Note that you
+// The etp_rt cookie is automatically set when visiting https://beta-api.crunchyroll.com. Note that you
 // need a crunchyroll account to access it.
 func LoginWithRefreshToken(refreshToken string, locale LOCALE, client *http.Client) (*Crunchyroll, error) {
 	endpoint := "https://beta-api.crunchyroll.com/auth/v1/token"
@@ -136,7 +136,7 @@ func LoginWithRefreshToken(refreshToken string, locale LOCALE, client *http.Clie
 	resp, err := request(req, client)
 	if err != nil {
 		if reqErr := err.(*RequestError); reqErr != nil && reqErr.Response.StatusCode == http.StatusBadRequest {
-			endpoint = "https://beta.crunchyroll.com/auth/v1/token"
+			endpoint = "https://beta-api.crunchyroll.com/auth/v1/token"
 			grantType = url.Values{}
 			grantType.Set("grant_type", "etp_rt_cookie")
 			grantType.Set("scope", "offline_access")

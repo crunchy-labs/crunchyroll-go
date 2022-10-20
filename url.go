@@ -98,30 +98,18 @@ func (c *Crunchyroll) ExtractEpisodesFromUrl(url string, audio ...LOCALE) ([]*Ep
 // ParseUrl parses the given url into a series or episode.
 // The returning episode is a slice because non-beta urls have the same episode with different languages.
 func (c *Crunchyroll) ParseUrl(url string) (*Series, []*Episode, error) {
-	if seriesId, ok := ParseBetaSeriesURL(url); ok {
+	if seriesId, ok := ParseSeriesURL(url); ok {
 		series, err := SeriesFromID(c, seriesId)
 		if err != nil {
 			return nil, nil, err
 		}
 		return series, nil, nil
-	} else if episodeId, ok := ParseBetaEpisodeURL(url); ok {
+	} else if episodeId, ok := ParseEpisodeURL(url); ok {
 		episode, err := EpisodeFromID(c, episodeId)
 		if err != nil {
 			return nil, nil, err
 		}
 		return nil, []*Episode{episode}, nil
-	} else if seriesName, ok := ParseVideoURL(url); ok {
-		video, err := c.FindVideoByName(seriesName)
-		if err != nil {
-			return nil, nil, err
-		}
-		return video.(*Series), nil, nil
-	} else if seriesName, title, _, _, ok := ParseEpisodeURL(url); ok {
-		episodes, err := c.FindEpisodeByName(seriesName, title)
-		if err != nil {
-			return nil, nil, err
-		}
-		return nil, episodes, nil
 	} else {
 		return nil, nil, fmt.Errorf("invalid url %s", url)
 	}

@@ -86,7 +86,7 @@ type OwnerReview struct {
 
 // Edit edits the review from the logged in account.
 func (or *OwnerReview) Edit(title, content string, spoiler bool) error {
-	endpoint := fmt.Sprintf("https://beta.crunchyroll.com/content-reviews/v2/en-US/user/%s/review/series/%s", or.crunchy.Config.AccountID, or.SeriesID)
+	endpoint := fmt.Sprintf("https://beta-api.crunchyroll.com/content-reviews/v2/en-US/user/%s/review/series/%s", or.crunchy.Config.AccountID, or.SeriesID)
 	body, _ := json.Marshal(map[string]any{
 		"title":   title,
 		"body":    content,
@@ -110,7 +110,7 @@ func (or *OwnerReview) Edit(title, content string, spoiler bool) error {
 
 // Delete deletes the review from the logged in account.
 func (or *OwnerReview) Delete() error {
-	endpoint := fmt.Sprintf("https://beta.crunchyroll.com/content-reviews/v2/en-US/user/%s/review/series/%s", or.crunchy.Config.AccountID, or.SeriesID)
+	endpoint := fmt.Sprintf("https://beta-api.crunchyroll.com/content-reviews/v2/en-US/user/%s/review/series/%s", or.crunchy.Config.AccountID, or.SeriesID)
 	_, err := or.crunchy.request(endpoint, http.MethodDelete)
 	return err
 }
@@ -154,7 +154,7 @@ func (ur *UserReview) rate(positive bool) error {
 		return fmt.Errorf("review is already rated as %s", humanReadable)
 	}
 
-	endpoint := fmt.Sprintf("https://beta.crunchyroll.com/content-reviews/v2/user/%s/rating/review/%s", ur.crunchy.Config.AccountID, ur.ReviewData.ID)
+	endpoint := fmt.Sprintf("https://beta-api.crunchyroll.com/content-reviews/v2/user/%s/rating/review/%s", ur.crunchy.Config.AccountID, ur.ReviewData.ID)
 	var body []byte
 	if positive {
 		body, _ = json.Marshal(map[string]string{"rate": "yes"})
@@ -183,7 +183,7 @@ func (ur *UserReview) Report() error {
 	if ur.Ratings.Reported {
 		return fmt.Errorf("review is already reported")
 	}
-	endpoint := fmt.Sprintf("https://beta.crunchyroll.com/content-reviews/v2/user/%s/report/review/%s", ur.crunchy.Config.AccountID, ur.ReviewData.ID)
+	endpoint := fmt.Sprintf("https://beta-api.crunchyroll.com/content-reviews/v2/user/%s/report/review/%s", ur.crunchy.Config.AccountID, ur.ReviewData.ID)
 	_, err := ur.crunchy.request(endpoint, http.MethodPut)
 	if err != nil {
 		return err
@@ -200,7 +200,7 @@ func (ur *UserReview) RemoveReport() error {
 	if !ur.Ratings.Reported {
 		return fmt.Errorf("review is not reported")
 	}
-	endpoint := fmt.Sprintf("https://beta.crunchyroll.com/content-reviews/v2/user/%s/report/review/%s", ur.crunchy.Config.AccountID, ur.ReviewData.ID)
+	endpoint := fmt.Sprintf("https://beta-api.crunchyroll.com/content-reviews/v2/user/%s/report/review/%s", ur.crunchy.Config.AccountID, ur.ReviewData.ID)
 	_, err := ur.crunchy.request(endpoint, http.MethodDelete)
 	if err != nil {
 		return err

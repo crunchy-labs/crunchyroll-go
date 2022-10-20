@@ -8,7 +8,7 @@ import (
 
 // News returns the top and latest news from crunchyroll for the current locale within the given limits.
 func (c *Crunchyroll) News(topLimit uint, latestLimit uint) (t []*News, l []*News, err error) {
-	newsFeedEndpoint := fmt.Sprintf("https://beta.crunchyroll.com/content/v1/news_feed?top_news_n=%d&latest_news_n=%d&locale=%s",
+	newsFeedEndpoint := fmt.Sprintf("https://beta-api.crunchyroll.com/content/v1/news_feed?top_news_n=%d&latest_news_n=%d&locale=%s",
 		topLimit, latestLimit, c.Locale)
 	resp, err := c.request(newsFeedEndpoint, http.MethodGet)
 	if err != nil {

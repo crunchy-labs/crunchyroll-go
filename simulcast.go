@@ -8,7 +8,7 @@ import (
 
 // Simulcasts returns all available simulcast seasons for the current locale.
 func (c *Crunchyroll) Simulcasts() (s []*Simulcast, err error) {
-	seasonListEndpoint := fmt.Sprintf("https://beta.crunchyroll.com/content/v1/season_list?locale=%s", c.Locale)
+	seasonListEndpoint := fmt.Sprintf("https://beta-api.crunchyroll.com/content/v1/season_list?locale=%s", c.Locale)
 	resp, err := c.request(seasonListEndpoint, http.MethodGet)
 	if err != nil {
 		return nil, err

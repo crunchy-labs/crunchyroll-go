@@ -10,7 +10,7 @@ import (
 
 // Account returns information about the currently logged in crunchyroll account.
 func (c *Crunchyroll) Account() (*Account, error) {
-	resp, err := c.request("https://beta.crunchyroll.com/accounts/v1/me", http.MethodGet)
+	resp, err := c.request("https://beta-api.crunchyroll.com/accounts/v1/me", http.MethodGet)
 	if err != nil {
 		return nil, err
 	}
@@ -24,7 +24,7 @@ func (c *Crunchyroll) Account() (*Account, error) {
 		return nil, fmt.Errorf("failed to parse 'me' response: %w", err)
 	}
 
-	resp, err = c.request("https://beta.crunchyroll.com/accounts/v1/me/profile", http.MethodGet)
+	resp, err = c.request("https://beta-api.crunchyroll.com/accounts/v1/me/profile", http.MethodGet)
 	if err != nil {
 		return nil, err
 	}
@@ -104,7 +104,7 @@ func (a *Account) UpdateMatureMangaContent(enabled bool) error {
 }
 
 func (a *Account) updatePreferences(name, value string) error {
-	endpoint := "https://beta.crunchyroll.com/accounts/v1/me/profile"
+	endpoint := "https://beta-api.crunchyroll.com/accounts/v1/me/profile"
 	body, _ := json.Marshal(map[string]string{name: value})
 	req, err := http.NewRequest(http.MethodPatch, endpoint, bytes.NewBuffer(body))
 	if err != nil {
@@ -117,7 +117,7 @@ func (a *Account) updatePreferences(name, value string) error {
 
 // ChangePassword changes the password for the current account.
 func (a *Account) ChangePassword(currentPassword, newPassword string) error {
-	endpoint := "https://beta.crunchyroll.com/accounts/v1/me/credentials"
+	endpoint := "https://beta-api.crunchyroll.com/accounts/v1/me/credentials"
 	body, _ := json.Marshal(map[string]string{"accountId": a.AccountID, "current_password": currentPassword, "new_password": newPassword})
 	req, err := http.NewRequest(http.MethodPatch, endpoint, bytes.NewBuffer(body))
 	if err != nil {
@@ -130,7 +130,7 @@ func (a *Account) ChangePassword(currentPassword, newPassword string) error {
 
 // ChangeEmail changes the email address for the current account.
 func (a *Account) ChangeEmail(currentPassword, newEmail string) error {
-	endpoint := "https://beta.crunchyroll.com/accounts/v1/me/credentials"
+	endpoint := "https://beta-api.crunchyroll.com/accounts/v1/me/credentials"
 	body, _ := json.Marshal(map[string]string{"current_password": currentPassword, "email": newEmail})
 	req, err := http.NewRequest(http.MethodPatch, endpoint, bytes.NewBuffer(body))
 	if err != nil {
@@ -143,7 +143,7 @@ func (a *Account) ChangeEmail(currentPassword, newEmail string) error {
 
 // AvailableWallpapers returns all available wallpapers which can be set as profile wallpaper.
 func (a *Account) AvailableWallpapers() (w []*Wallpaper, err error) {
-	endpoint := "https://beta.crunchyroll.com/assets/v1/wallpaper"
+	endpoint := "https://beta-api.crunchyroll.com/assets/v1/wallpaper"
 	resp, err := a.crunchy.request(endpoint, http.MethodGet)
 	if err != nil {
 		return nil, err
@@ -160,7 +160,7 @@ func (a *Account) AvailableWallpapers() (w []*Wallpaper, err error) {
 // ChangeWallpaper changes the profile wallpaper of the current user. Use AvailableWallpapers
 // to get all available ones.
 func (a *Account) ChangeWallpaper(wallpaper *Wallpaper) error {
-	endpoint := "https://beta.crunchyroll.com/accounts/v1/me/profile"
+	endpoint := "https://beta-api.crunchyroll.com/accounts/v1/me/profile"
 	body, _ := json.Marshal(map[string]string{"wallpaper": string(*wallpaper)})
 	req, err := http.NewRequest(http.MethodPatch, endpoint, bytes.NewBuffer(body))
 	if err != nil {
