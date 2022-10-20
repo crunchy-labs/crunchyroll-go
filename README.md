@@ -42,7 +42,9 @@ The documentation is available on [pkg.go.dev](https://pkg.go.dev/github.com/cru
 
 ## ☂️ Coverage
 
-Around _90% - 95%_ of the crunchyroll beta api (at state of writing) are implemented.
+> As of _19.10.2022_ Crunchyroll rolled out a breaking change for their website which makes some of this library function unusable
+
+Around _90% - 95%_ of the crunchyroll api (at state of writing) are implemented.
 Only some endpoints on the home / index screen are missing.
 Since the library will be rewritten in Rust, I don't see any further use cases of implementing the missing endpoints in this project.
 They would be useless for 99% of the library usage anyway, unless you want to rebuild crunchyroll on top of it (or for whatever reason you want to implement home screen endpoints).
