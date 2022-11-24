@@ -5,22 +5,22 @@ A [Go](https://golang.org) library & cli for the undocumented [crunchyroll](http
 **If you're searching for the command line client, head over to _[crunchy-cli](https://github.com/crunchy-labs/crunchy-cli)_. This repo only contains the golang crunchyroll library!**
 
 <p align="center">
-  <a href="https://github.com/ByteDream/crunchyroll-go">
+  <a href="https://github.com/crunchy-labs/crunchyroll-go">
     <img src="https://img.shields.io/github/languages/code-size/ByteDream/crunchyroll-go?style=flat-square" alt="Code size">
   </a>
-  <a href="https://github.com/ByteDream/crunchyroll-go/blob/master/LICENSE">
+  <a href="https://github.com/crunchy-labs/crunchyroll-go/blob/master/LICENSE">
     <img src="https://img.shields.io/github/license/ByteDream/crunchyroll-go?style=flat-square" alt="License">
   </a>
   <a href="https://golang.org">
     <img src="https://img.shields.io/github/go-mod/go-version/ByteDream/crunchyroll-go?style=flat-square" alt="Go version">
   </a>
-  <a href="https://github.com/ByteDream/crunchyroll-go/releases/latest">
+  <a href="https://github.com/crunchy-labs/crunchyroll-go/releases/latest">
     <img src="https://img.shields.io/github/v/release/ByteDream/crunchyroll-go?style=flat-square" alt="Release">
   </a>
-  <a href="https://discord.gg/gUWwekeNNg">
+  <a href="https://discord.gg/PXGPGpQxgk">
     <img src="https://img.shields.io/discord/915659846836162561?label=discord&style=flat-square" alt="Discord">
   </a>
-  <a href="https://github.com/ByteDream/crunchyroll-go/actions/workflows/ci.yml">
+  <a href="https://github.com/crunchy-labs/crunchyroll-go/actions/workflows/ci.yml">
     <img src="https://github.com/ByteDream/crunchyroll-go/workflows/CI/badge.svg?style=flat" alt="CI">
   </a>
 </p>
@@ -42,7 +42,7 @@ The documentation is available on [pkg.go.dev](https://pkg.go.dev/github.com/cru
 
 ## ☂️ Coverage
 
-> As of _19.10.2022_ Crunchyroll rolled out a breaking change for their website which makes some of this library function unusable
+> As of _19.10.2022_ Crunchyroll rolled out a breaking change for their website which makes some of the library functions unusable
 
 Around _90% - 95%_ of the crunchyroll api (at state of writing) are implemented.
 Only some endpoints on the home / index screen are missing.
