@@ -1,8 +1,8 @@
 # crunchyroll-go
 
-A [Go](https://golang.org) library & cli for the undocumented [crunchyroll](https://www.crunchyroll.com) api. To use it, you need a crunchyroll premium account to for full (api) access.
+A [Go](https://golang.org) library for the undocumented [Crunchyroll](https://www.crunchyroll.com) API. To use it, you need a Crunchyroll premium account for full (API) access.
 
-**If you're searching for the command line client, head over to _[crunchy-cli](https://github.com/crunchy-labs/crunchy-cli)_. This repo only contains the golang crunchyroll library!**
+**If you're searching for the command line client, head over to _[crunchy-cli](https://github.com/crunchy-labs/crunchy-cli)_. This repo only contains the Golang Crunchyroll library!**
 
 <p align="center">
   <a href="https://github.com/crunchy-labs/crunchyroll-go">
@@ -26,7 +26,7 @@ A [Go](https://golang.org) library & cli for the undocumented [crunchyroll](http
 </p>
 
 > Beginning with version v3, this project is set to maintenance mode (only small fixes, no new features) in favor of rewriting it completely in Rust.
-> Go bindings for the finished rust rewrite will be provided.
+> Go bindings for the finished Rust rewrite will be provided.
 
 ## 📥 Download
 
@@ -44,9 +44,9 @@ The documentation is available on [pkg.go.dev](https://pkg.go.dev/github.com/cru
 
 > As of _19.10.2022_ Crunchyroll rolled out a breaking change for their website which makes some of the library functions unusable
 
-Around _90% - 95%_ of the crunchyroll api (at state of writing) are implemented.
+Around _90% - 95%_ of the Crunchyroll API (at state of writing) are implemented.
 Only some endpoints on the home / index screen are missing.
-Since the library will be rewritten in Rust, I don't see any further use cases of implementing the missing endpoints in this project.
+Since the library will be rewritten in Rust, we don't see any further use cases of implementing the missing endpoints in this project.
 They would be useless for 99% of the library usage anyway, unless you want to rebuild crunchyroll on top of it (or for whatever reason you want to implement home screen endpoints).
 
 ## ⚖ License
