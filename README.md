@@ -1,5 +1,8 @@
 # crunchyroll-go
 
+> [!IMPORTANT]\
+> **This library is deprecated and archived in favor of its [Rust](https://github.com/crunchy-labs/crunchyroll-rs) successor.**
+
 A [Go](https://golang.org) library for the undocumented [Crunchyroll](https://www.crunchyroll.com) API. To use it, you need a Crunchyroll premium account for full (API) access.
 
 **If you're searching for the command line client, head over to _[crunchy-cli](https://github.com/crunchy-labs/crunchy-cli)_. This repo only contains the Golang Crunchyroll library!**
@@ -25,8 +28,8 @@ A [Go](https://golang.org) library for the undocumented [Crunchyroll](https://ww
   </a>
 </p>
 
-> Beginning with version v3, this project is set to maintenance mode (only small fixes, no new features) in favor of rewriting it completely in Rust.
-> Go bindings for the finished Rust rewrite will be provided.
+> ~~Beginning with version v3, this project is set to maintenance mode (only small fixes, no new features) in favor of rewriting it completely in Rust.
+> Go bindings for the finished Rust rewrite will be provided.~~
 
 ## 📥 Download
 
